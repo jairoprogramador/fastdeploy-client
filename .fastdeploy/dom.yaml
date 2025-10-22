@@ -1,0 +1,20 @@
+product:
+    product_id: 1fc2567de08e4839b36a6e1522a70983d3766efe7eea0a9be295ca5f3fe3945f
+    name: test
+    description: my product
+    team: zenin
+    organization: fastdeploy
+project:
+    project_id: f715d980d7673c6ff21ec2ec1642799d142b3fe4182d8fe2912f637d2e603ebc
+    name: test
+    version: 1.0.0
+    description: my project
+    team: shikigami
+template:
+    repository_url: https://github.com/jairoprogramador/mydeploytest.git
+    ref: main
+technology:
+    type: backend
+    solution: microservice
+    stack: springboot
+    infrastructure: azure

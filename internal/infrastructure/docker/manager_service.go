@@ -1,0 +1,82 @@
+package docker
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"strings"
+
+	"github.com/jairoprogramador/fastdeploy/internal/domain/docker/ports"
+	"github.com/jairoprogramador/fastdeploy/internal/domain/docker/vos"
+	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/executor"
+)
+
+type managerDockerService struct {
+	exec executor.CommandExecutor
+}
+
+func NewManagerDockerService(exec executor.CommandExecutor) ports.DockerService {
+	return &managerDockerService{exec: exec}
+}
+
+func (s *managerDockerService) Check(ctx context.Context) error {
+	log.Println("Checking for Docker...")
+	err := s.exec.Execute(ctx, "docker --version", "")
+	if err != nil {
+		return fmt.Errorf("docker command failed. Please ensure Docker is installed and running")
+	}
+	log.Println("✅ Docker check successful")
+	return nil
+}
+
+func (s *managerDockerService) Build(ctx context.Context, opts vos.BuildOptions) error {
+	log.Printf("Building image: %s", opts.Image.FullName())
+
+	var commandBuilder strings.Builder
+	commandBuilder.WriteString("docker build")
+
+	for key, val := range opts.Args {
+		commandBuilder.WriteString(fmt.Sprintf(" --build-arg %s=%s", key, val))
+	}
+
+	commandBuilder.WriteString(fmt.Sprintf(" -t %s", opts.Image.FullName()))
+
+	if opts.Dockerfile != "" {
+		commandBuilder.WriteString(fmt.Sprintf(" -f %s", opts.Dockerfile))
+	}
+
+	commandBuilder.WriteString(fmt.Sprintf(" %s", opts.Context))
+
+	return s.exec.Execute(ctx, commandBuilder.String(), opts.Context)
+}
+
+func (s *managerDockerService) Run(ctx context.Context, opts vos.RunOptions) error {
+	var commandBuilder strings.Builder
+	commandBuilder.WriteString("docker run")
+
+	if opts.RemoveOnExit {
+		commandBuilder.WriteString(" --rm")
+	}
+	if opts.Interactive {
+		commandBuilder.WriteString(" -i")
+	}
+	if opts.AllocateTTY {
+		commandBuilder.WriteString(" -t")
+	}
+	if opts.WorkDir != "" {
+		commandBuilder.WriteString(fmt.Sprintf(" -w %s", opts.WorkDir))
+	}
+
+	for key, val := range opts.EnvVars {
+		commandBuilder.WriteString(fmt.Sprintf(" -e %s=%s", key, val))
+	}
+
+	for _, vol := range opts.Volumes {
+		commandBuilder.WriteString(fmt.Sprintf(" -v %s:%s", vol.HostPath, vol.ContainerPath))
+	}
+
+	commandBuilder.WriteString(fmt.Sprintf(" %s", opts.Image.FullName()))
+	commandBuilder.WriteString(fmt.Sprintf(" %s", opts.Command))
+
+	return s.exec.Execute(ctx, commandBuilder.String(), "")
+}

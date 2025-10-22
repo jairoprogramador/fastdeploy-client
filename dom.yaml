@@ -1,5 +1,0 @@
-technology:
-  type: backend
-  solution: microservice
-  stack: springboot
-  provider: azure
