@@ -102,6 +102,10 @@ func (s *OrderService) prepareBuildOptions(fileConfig *proVos.Config) (docVos.Bu
 		buildArgs["DEV_GID"] = "$(id -g)"
 	}
 
+	if fileConfig.Runtime.CoreVersion != "" {
+		buildArgs["FASTDEPLOY_VERSION"] = fileConfig.Runtime.CoreVersion
+	}
+
 	return docVos.BuildOptions{
 		Image:      localImage,
 		Context:    ".",

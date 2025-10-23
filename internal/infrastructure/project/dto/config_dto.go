@@ -18,6 +18,7 @@ type FileConfig struct {
 		Infrastructure string `yaml:"infrastructure"`
 	} `yaml:"technology"`
 	Runtime struct {
+		CoreVersion string `yaml:"core_version"`
 		Image struct {
 			Source string `yaml:"source"`
 			Tag    string `yaml:"tag"`

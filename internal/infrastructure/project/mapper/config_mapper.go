@@ -35,6 +35,7 @@ func ToDomain(configDto dto.FileConfig) *vos.Config {
 			Infrastructure: configDto.Technology.Infrastructure,
 		},
 		Runtime: vos.Runtime{
+			CoreVersion: configDto.Runtime.CoreVersion,
 			Image: vos.Image{
 				Source: configDto.Runtime.Image.Source,
 				Tag:    configDto.Runtime.Image.Tag,

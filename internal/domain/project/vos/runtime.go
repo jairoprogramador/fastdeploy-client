@@ -11,6 +11,7 @@ const (
 )
 
 type Runtime struct {
+	CoreVersion string
 	Image   Image
 	Volumes Volumes
 }

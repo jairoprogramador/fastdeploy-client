@@ -14,6 +14,7 @@ technology:
   infrastructure: "azure"
 
 runtime:
+  core_version: "1.0.3"
   image:
     #source: "fastdeploy/runner-java"
     tag: "1.2.0"
