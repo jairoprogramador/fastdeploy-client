@@ -1,12 +1,7 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
-
-	"github.com/jairoprogramador/fastdeploy/internal/application"
-	infra "github.com/jairoprogramador/fastdeploy/internal/infrastructure/project"
+	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/factories"
 	"github.com/spf13/cobra"
 )
 
@@ -16,25 +11,22 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initializes a new project (creates fdconfig.yaml).",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		workDir, err := os.Getwd()
+		factory := factories.NewServiceFactory()
+
+		logFile, err := factory.BuildFileLogRepository().CreateFile()
 		if err != nil {
-			return fmt.Errorf("could not get working directory: %w", err)
+			return err
+		}
+		defer logFile.Close()
+
+		initService, err := factory.BuildInitService(logFile)
+		if err != nil {
+			return err
 		}
 
-		repository := infra.NewYAMLProjectRepository(workDir)
-		inputService := infra.NewSurveyUserInputService()
-		initService := application.NewInitService(filepath.Base(workDir), repository, inputService)
-
-		err = initService.InitializeProject(cmd.Context(), !nonInteractive)
-		if err != nil {
-			if err == application.ErrProjectAlreadyExists {
-				fmt.Println(application.MessageProjectAlreadyExists)
-				return nil
-			}
-			return fmt.Errorf("initialization failed: %w", err)
+		if err = initService.InitializeProject(cmd.Context(), !nonInteractive);err != nil {
+			return err
 		}
-
-		fmt.Println("✅ Project initialized successfully. 'fdconfig.yaml' created.")
 		return nil
 	},
 }

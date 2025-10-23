@@ -2,58 +2,73 @@ package application
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
+	proPor "github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
+	proVos "github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
+
+	appPor "github.com/jairoprogramador/fastdeploy/internal/application/ports"
 )
 
 const MessageProjectAlreadyExists = "project already initialized, fdconfig.yaml exists"
-var ErrProjectAlreadyExists = errors.New(MessageProjectAlreadyExists)
 
 type InitService struct {
-	projectRepository ports.ProjectRepository
-	inputService      ports.UserInputService
-	projectName           string
+	projectRepository proPor.ProjectRepository
+	inputService      proPor.UserInputService
+	projectName       string
+	logMessage        appPor.LogMessage
 }
 
-func NewInitService(projectName string, repository ports.ProjectRepository, inputSvc ports.UserInputService) *InitService {
+func NewInitService(
+	projectName string,
+	repository proPor.ProjectRepository,
+	inputSvc proPor.UserInputService,
+	logMessage appPor.LogMessage) *InitService {
 	return &InitService{
 		projectRepository: repository,
 		inputService:      inputSvc,
 		projectName:       projectName,
+		logMessage:        logMessage,
 	}
 }
 
 func (s *InitService) InitializeProject(ctx context.Context, interactive bool) error {
+	s.logMessage.Info("initializing project...")
 	exists, err := s.projectRepository.Exists()
 	if err != nil {
-		return fmt.Errorf("could not check if project exists: %w", err)
+		s.logMessage.Error(fmt.Sprintf("%v", err))
+		return err
 	}
 	if exists {
-		return ErrProjectAlreadyExists
+		s.logMessage.Info(MessageProjectAlreadyExists)
+		return nil
 	}
 
-	var cfg *vos.Config
+	var cfg *proVos.Config
 	if interactive {
 		cfg, err = s.gatherConfigFromUser(ctx)
+		if err != nil {
+			s.logMessage.Error(fmt.Sprintf("%v", err))
+			return err
+		}
 	} else {
-		cfg, err = s.gatherDefaultConfig()
+		cfg = s.gatherDefaultConfig()
 	}
 
+	err = s.projectRepository.Save(cfg)
 	if err != nil {
+		s.logMessage.Error(fmt.Sprintf("%v", err))
 		return err
 	}
 
-	return s.projectRepository.Save(cfg)
+	s.logMessage.Success("project initialized successfully")
+	return nil
 }
 
-func (s *InitService) gatherConfigFromUser(ctx context.Context) (*vos.Config, error) {
-	cfg, err := s.gatherDefaultConfig()
-	if err != nil {
-		return nil, err
-	}
+func (s *InitService) gatherConfigFromUser(ctx context.Context) (*proVos.Config, error) {
+	cfg := s.gatherDefaultConfig()
+	
+    var err error
 
 	cfg.Project.Name, err = s.inputService.Ask(ctx, "Project Name", cfg.Project.Name)
 	if err != nil {
@@ -99,36 +114,36 @@ func (s *InitService) gatherConfigFromUser(ctx context.Context) (*vos.Config, er
 	return cfg, nil
 }
 
-func (s *InitService) gatherDefaultConfig() (*vos.Config, error) {
-	return &vos.Config{
-		Project: vos.Project{
+func (s *InitService) gatherDefaultConfig() *proVos.Config {
+	return &proVos.Config{
+		Project: proVos.Project{
 			Name:         s.projectName,
-			Version:      vos.DefaultProjectVersion,
-			Team:         vos.DefaultProjectTeam,
-			Description:  vos.DefaultProjectDescription,
-			Organization: vos.DefaultProjectOrganization,
+			Version:      proVos.DefaultProjectVersion,
+			Team:         proVos.DefaultProjectTeam,
+			Description:  proVos.DefaultProjectDescription,
+			Organization: proVos.DefaultProjectOrganization,
 		},
-		Template: vos.Template{
-			URL: vos.DefaultUrl,
-			Ref: vos.DefaultRef,
+		Template: proVos.Template{
+			URL: proVos.DefaultUrl,
+			Ref: proVos.DefaultRef,
 		},
-		Technology: vos.Technology{
-			Stack:          vos.DefaultStack,
-			Infrastructure: vos.DefaultInfrastructure,
+		Technology: proVos.Technology{
+			Stack:          proVos.DefaultStack,
+			Infrastructure: proVos.DefaultInfrastructure,
 		},
-		Runtime: vos.Runtime{
-			Image: vos.Image{
-				Source: vos.DefaultImageSource,
-				Tag:    vos.DefaultImageTag,
+		Runtime: proVos.Runtime{
+			Image: proVos.Image{
+				Source: proVos.DefaultImageSource,
+				Tag:    proVos.DefaultImageTag,
 			},
-			Volumes: vos.Volumes{
-				ProjectMountPath: vos.DefaultProjectMountPath,
-				StateMountPath:   vos.DefaultStateMountPath,
+			Volumes: proVos.Volumes{
+				ProjectMountPath: proVos.DefaultProjectMountPath,
+				StateMountPath:   proVos.DefaultStateMountPath,
 			},
 		},
-		State: vos.State{
-			Backend: vos.DefaultStateBackend,
-			URL:     vos.DefaultStateURL,
+		State: proVos.State{
+			Backend: proVos.DefaultStateBackend,
+			URL:     proVos.DefaultStateURL,
 		},
-	}, nil
+	}
 }

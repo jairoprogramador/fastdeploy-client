@@ -4,24 +4,28 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
-	"os"
 	"os/exec"
 	"runtime"
+
+	"github.com/jairoprogramador/fastdeploy/internal/application/ports"
 )
 
 type CommandExecutor interface {
 	Execute(ctx context.Context, command string, workDir string) error
 }
 
-type shellCommandExecutor struct{}
-
-func NewShellCommandExecutor() CommandExecutor {
-	return &shellCommandExecutor{}
+type ShellExecutor struct {
+	logger ports.LogMessage
 }
 
-func (e *shellCommandExecutor) Execute(ctx context.Context, command string, workDir string) error {
-	log.Println("Executing command:", command)
+func NewShellExecutor(logger ports.LogMessage) CommandExecutor {
+	return &ShellExecutor{
+		logger: logger,
+	}
+}
+
+func (e *ShellExecutor) Execute(ctx context.Context, command string, workDir string) error {
+	e.logger.Detail(fmt.Sprintf("Executing command: %s", command))
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "linux" {
@@ -30,16 +34,26 @@ func (e *shellCommandExecutor) Execute(ctx context.Context, command string, work
 		cmd = exec.CommandContext(ctx, "cmd", "/C", command)
 	}
 
-	var stderrBuf bytes.Buffer
-	cmd.Stdout = os.Stdout
+	var stdoutBuf, stderrBuf bytes.Buffer
+	cmd.Stdout = &stdoutBuf
 	cmd.Stderr = &stderrBuf
 	if workDir != "" {
 		cmd.Dir = workDir
 	}
 
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("command failed: %w: %s", err, stderrBuf.String())
+	err := cmd.Run()
+
+	if stdoutBuf.Len() > 0 {
+		e.logger.Detail(stdoutBuf.String())
 	}
 
+	if stderrBuf.Len() > 0 {
+		e.logger.Detail(stderrBuf.String())
+	}
+
+	if err != nil {
+		e.logger.Error(fmt.Sprintf("command failed: %v: %s", err, stderrBuf.String()))
+		return err
+	}
 	return nil
 }

@@ -8,9 +8,8 @@ import (
 )
 
 var (
-	structColor    = color.New(color.FgWhite)
-	commandColor   = color.New(color.FgGreen, color.Bold)
-	versionColor   = color.New(color.FgHiGreen)
+	structColor    = color.New(color.FgHiGreen, color.Bold)
+	versionColor   = color.New(color.FgWhite)
 )
 
 var versionCmd = &cobra.Command{
@@ -18,46 +17,16 @@ var versionCmd = &cobra.Command{
 	Short: "Prints the version of the CLI.",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		fmt.Println()
-		structColor.Print("                  . ")
-		structColor.Print("4242")
-		structColor.Println(" .")
-		structColor.Println("                 1        1")
-		structColor.Println("              ==1==========1==")
-		structColor.Println("                1  @    @  1")
-		structColor.Println("                 1        1")
-		structColor.Println("                   1    1")
-		structColor.Print("              .")
-		structColor.Print("1337")
-		structColor.Print("      ")
-		structColor.Print("1337")
-		structColor.Println(".")
-		structColor.Println("            @                  @")
-		structColor.Println("          1                      1")
-		structColor.Print("         0  ")
-		structColor.Print("100000000")
-		structColor.Print("📸")
-		structColor.Print("100000000")
-		structColor.Println("  0         ")
-		structColor.Println("        1   1                  1   1")
-		structColor.Print("        0   0  ")
-		commandColor.Print("$ fd init")
-		structColor.Println("       0   0")
-		structColor.Print("        0   0  ")
-		commandColor.Print("$ fd test")
-		structColor.Println("       0   0")
-		structColor.Print("        0   0  ")
-		commandColor.Print("$ fd deploy")
-		structColor.Println("     0   0")
-
-		structColor.Println("          @ @__________________@ 0")
-		structColor.Print("            ")
-		structColor.Print("110111011-0xDEADBEEF")
-
-		fmt.Println()
+		structColor.Println(" _____         _   ____             _")
+		structColor.Println("|  ___|_ _ ___| |_|  _ \\  ___ _ __ | | ___  _   _")
+		structColor.Println("| |_ / _` / __| __| | | |/ _ \\ '_ \\| |/ _ \\| | | |")
+		structColor.Println("|  _| (_| \\__ \\ |_| |_| |  __/ |_) | | (_) | |_| |")
+		structColor.Println("|_|  \\__,_|___/\\__|____/ \\___| .__/|_|\\___/ \\__, |")
+		structColor.Println("                             |_|            |___/")
+		
 		fmt.Println()
 
-		versionStr := fmt.Sprintf("       FastDeploy CLI version: v%s", version)
+		versionStr := fmt.Sprintf("FastDeploy CLI version: v%s", version)
 		versionColor.Println(versionStr)
 		fmt.Println()
 	},

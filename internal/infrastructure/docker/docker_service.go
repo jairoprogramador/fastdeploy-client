@@ -3,34 +3,38 @@ package docker
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/docker/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/docker/vos"
+	appPor "github.com/jairoprogramador/fastdeploy/internal/application/ports"
+	docPor "github.com/jairoprogramador/fastdeploy/internal/domain/docker/ports"
+	docVos "github.com/jairoprogramador/fastdeploy/internal/domain/docker/vos"
 	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/executor"
 )
 
-type managerDockerService struct {
-	exec executor.CommandExecutor
+type DockerService struct {
+	exec   executor.CommandExecutor
+	logger appPor.LogMessage
 }
 
-func NewManagerDockerService(exec executor.CommandExecutor) ports.DockerService {
-	return &managerDockerService{exec: exec}
+func NewDockerService(exec executor.CommandExecutor, logger appPor.LogMessage) docPor.DockerService {
+	return &DockerService{
+		exec:   exec,
+		logger: logger,
+	}
 }
 
-func (s *managerDockerService) Check(ctx context.Context) error {
-	log.Println("Checking for Docker...")
+func (s *DockerService) Check(ctx context.Context) error {
+	s.logger.Detail("Checking for Docker...")
 	err := s.exec.Execute(ctx, "docker --version", "")
 	if err != nil {
-		return fmt.Errorf("docker command failed. Please ensure Docker is installed and running")
+		return err
 	}
-	log.Println("✅ Docker check successful")
+	s.logger.Detail("Docker check successful")
 	return nil
 }
 
-func (s *managerDockerService) Build(ctx context.Context, opts vos.BuildOptions) error {
-	log.Printf("Building image: %s", opts.Image.FullName())
+func (s *DockerService) Build(ctx context.Context, opts docVos.BuildOptions) error {
+	s.logger.Detail(fmt.Sprintf("Building image: %s", opts.Image.FullName()))
 
 	var commandBuilder strings.Builder
 	commandBuilder.WriteString("docker build")
@@ -47,10 +51,16 @@ func (s *managerDockerService) Build(ctx context.Context, opts vos.BuildOptions)
 
 	commandBuilder.WriteString(fmt.Sprintf(" %s", opts.Context))
 
-	return s.exec.Execute(ctx, commandBuilder.String(), opts.Context)
+	err := s.exec.Execute(ctx, commandBuilder.String(), opts.Context)
+	if err != nil {
+		return err
+	}
+	s.logger.Detail("Build image successful")
+	return nil
 }
 
-func (s *managerDockerService) Run(ctx context.Context, opts vos.RunOptions) error {
+func (s *DockerService) Run(ctx context.Context, opts docVos.RunOptions) error {
+	s.logger.Detail("Running image...")
 	var commandBuilder strings.Builder
 	commandBuilder.WriteString("docker run")
 
@@ -78,5 +88,10 @@ func (s *managerDockerService) Run(ctx context.Context, opts vos.RunOptions) err
 	commandBuilder.WriteString(fmt.Sprintf(" %s", opts.Image.FullName()))
 	commandBuilder.WriteString(fmt.Sprintf(" %s", opts.Command))
 
-	return s.exec.Execute(ctx, commandBuilder.String(), "")
+	err := s.exec.Execute(ctx, commandBuilder.String(), "")
+	if err != nil {
+		return err
+	}
+	s.logger.Detail("Run image successful")
+	return nil
 }
