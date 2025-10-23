@@ -6,46 +6,47 @@ import (
 	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/project/dto"
 )
 
-func ToDomain(fc dto.FileConfig) *vos.Config {
-	if fc.Runtime.Volumes.ProjectMountPath == "" {
-		fc.Runtime.Volumes.ProjectMountPath = vos.DefaultProjectMountPath
+func ToDomain(configDto dto.FileConfig) *vos.Config {
+	if configDto.Runtime.Volumes.ProjectMountPath == "" {
+		configDto.Runtime.Volumes.ProjectMountPath = vos.DefaultProjectMountPath
 	}
-	if fc.Runtime.Volumes.StateMountPath == "" {
-		fc.Runtime.Volumes.StateMountPath = vos.DefaultStateMountPath
+	if configDto.Runtime.Volumes.StateMountPath == "" {
+		configDto.Runtime.Volumes.StateMountPath = vos.DefaultStateMountPath
 	}
-	if fc.State.Backend == "" {
-		fc.State.Backend = vos.DefaultStateBackend
+	if configDto.State.Backend == "" {
+		configDto.State.Backend = vos.DefaultStateBackend
 	}
 
 	return &vos.Config{
 		Project: vos.Project{
-			Name:         fc.Project.Name,
-			Version:      fc.Project.Version,
-			Team:         fc.Project.Team,
-			Description:  fc.Project.Description,
-			Organization: fc.Project.Organization,
+			ID:           configDto.Project.ID,
+			Name:         configDto.Project.Name,
+			Version:      configDto.Project.Version,
+			Team:         configDto.Project.Team,
+			Description:  configDto.Project.Description,
+			Organization: configDto.Project.Organization,
 		},
 		Template: vos.Template{
-			URL: fc.Template.URL,
-			Ref: fc.Template.Ref,
+			URL: configDto.Template.URL,
+			Ref: configDto.Template.Ref,
 		},
 		Technology: vos.Technology{
-			Stack:          fc.Technology.Stack,
-			Infrastructure: fc.Technology.Infrastructure,
+			Stack:          configDto.Technology.Stack,
+			Infrastructure: configDto.Technology.Infrastructure,
 		},
 		Runtime: vos.Runtime{
 			Image: vos.Image{
-				Source: fc.Runtime.Image.Source,
-				Tag:    fc.Runtime.Image.Tag,
+				Source: configDto.Runtime.Image.Source,
+				Tag:    configDto.Runtime.Image.Tag,
 			},
 			Volumes: vos.Volumes{
-				ProjectMountPath: fc.Runtime.Volumes.ProjectMountPath,
-				StateMountPath:   fc.Runtime.Volumes.StateMountPath,
+				ProjectMountPath: configDto.Runtime.Volumes.ProjectMountPath,
+				StateMountPath:   configDto.Runtime.Volumes.StateMountPath,
 			},
 		},
 		State: vos.State{
-			Backend: fc.State.Backend,
-			URL:     fc.State.URL,
+			Backend: configDto.State.Backend,
+			URL:     configDto.State.URL,
 		},
 	}
 }

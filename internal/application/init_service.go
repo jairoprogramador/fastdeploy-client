@@ -6,6 +6,7 @@ import (
 
 	proPor "github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
 	proVos "github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
+	proSer "github.com/jairoprogramador/fastdeploy/internal/domain/project/services"
 
 	appPor "github.com/jairoprogramador/fastdeploy/internal/application/ports"
 )
@@ -17,18 +18,21 @@ type InitService struct {
 	inputService      proPor.UserInputService
 	projectName       string
 	logMessage        appPor.LogMessage
+	generatorID       proSer.GeneratorID
 }
 
 func NewInitService(
 	projectName string,
 	repository proPor.ProjectRepository,
 	inputSvc proPor.UserInputService,
-	logMessage appPor.LogMessage) *InitService {
+	logMessage appPor.LogMessage,
+	generatorID proSer.GeneratorID) *InitService {
 	return &InitService{
 		projectRepository: repository,
 		inputService:      inputSvc,
 		projectName:       projectName,
 		logMessage:        logMessage,
+		generatorID:       generatorID,
 	}
 }
 
@@ -54,6 +58,8 @@ func (s *InitService) InitializeProject(ctx context.Context, interactive bool) e
 	} else {
 		cfg = s.gatherDefaultConfig()
 	}
+
+	cfg.Project.ID = s.generatorID.ProjectID(cfg)
 
 	err = s.projectRepository.Save(cfg)
 	if err != nil {

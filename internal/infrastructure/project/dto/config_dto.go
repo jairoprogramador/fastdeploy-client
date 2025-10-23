@@ -2,6 +2,7 @@ package dto
 
 type FileConfig struct {
 	Project struct {
+		ID           string `yaml:"id"`
 		Name         string `yaml:"name"`
 		Version      string `yaml:"version"`
 		Team         string `yaml:"team"`

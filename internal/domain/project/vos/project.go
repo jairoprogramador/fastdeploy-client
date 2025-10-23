@@ -8,6 +8,7 @@ const (
 )
 
 type Project struct {
+	ID           string
 	Name         string
 	Version      string
 	Team         string

@@ -48,10 +48,12 @@ func (f *serviceFactory) BuildInitService(logFile io.WriteCloser) (*applic.InitS
 	if err != nil {
 		return nil, err
 	}
+	
+	generatorID := project.NewShaGeneratorID()
 
 	appLogger := logger.NewLoggerService(os.Stdout, logFile, false)
 	inputService := project.NewSurveyUserInputService()
-	return applic.NewInitService(filepath.Base(workDir), projectRepository, inputService, appLogger), nil
+	return applic.NewInitService(filepath.Base(workDir), projectRepository, inputService, appLogger, generatorID), nil
 }
 
 func (f *serviceFactory) BuildOrderService(logFile io.WriteCloser) (*applic.OrderService, error) {
