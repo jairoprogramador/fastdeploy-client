@@ -20,7 +20,6 @@ func NewLogService(repo ports.LogRepository, logMessage ports.LogMessage) *LogSe
 }
 
 func (s *LogService) GetLatestLog() ([]byte, error) {
-	s.logMessage.Info("getting log...")
 	content, err := s.repo.GetLatest()
 	if err != nil {
 		s.logMessage.Error(fmt.Sprintf("%v", err))
