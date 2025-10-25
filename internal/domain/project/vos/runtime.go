@@ -1,19 +1,25 @@
 package vos
 
 const (
+	DefaultCoreVersion = "1.0.3"
 	DefaultImageSource = "fastdeploy/runner-java17-springboot"
 	DefaultImageTag    = "latest"
 )
 
 const (
-	DefaultProjectMountPath = "/home/fastdeploy/app"
-	DefaultStateMountPath   = "/home/fastdeploy/.fastdeploy"
+	DefaultContainerProjectPath = "/home/fastdeploy/app"
+	DefaultContainerStatePath   = "/home/fastdeploy/.fastdeploy"
+)
+
+const (
+	ProjectPathKey = "projectPath"
+	StatePathKey   = "statePath"
 )
 
 type Runtime struct {
 	CoreVersion string
-	Image   Image
-	Volumes Volumes
+	Image       Image
+	Volumes     []Volume
 }
 
 type Image struct {
@@ -21,7 +27,7 @@ type Image struct {
 	Tag    string
 }
 
-type Volumes struct {
-	ProjectMountPath string
-	StateMountPath   string
+type Volume struct {
+	Host      string
+	Container string
 }

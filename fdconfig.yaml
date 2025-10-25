@@ -19,8 +19,12 @@ runtime:
     #source: "fastdeploy/runner-java"
     tag: "1.2.0"
   volumes:
-    project_mount_path: "/home/fastdeploy/app"
-    state_mount_path: "/home/fastdeploy/.fastdeploy"
+    - host: "projectPath"
+      container: "/home/fastdeploy/app"
+    - host: "statePath"
+      container: "/home/fastdeploy/.fastdeploy"
+    - host: "/home/jairo/.m2/"
+      container: "/home/fastdeploy/.m2"
 
 state:
   backend: "local"

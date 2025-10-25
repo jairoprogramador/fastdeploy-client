@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	proPor "github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
-	proVos "github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
 	proSer "github.com/jairoprogramador/fastdeploy/internal/domain/project/services"
+	proVos "github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
 
 	appPor "github.com/jairoprogramador/fastdeploy/internal/application/ports"
 )
@@ -73,8 +73,8 @@ func (s *InitService) InitializeProject(ctx context.Context, interactive bool) e
 
 func (s *InitService) gatherConfigFromUser(ctx context.Context) (*proVos.Config, error) {
 	cfg := s.gatherDefaultConfig()
-	
-    var err error
+
+	var err error
 
 	cfg.Project.Name, err = s.inputService.Ask(ctx, "Project Name", cfg.Project.Name)
 	if err != nil {
@@ -92,15 +92,14 @@ func (s *InitService) gatherConfigFromUser(ctx context.Context) (*proVos.Config,
 	if err != nil {
 		return nil, err
 	}
-	cfg.Template.URL, err = s.inputService.Ask(ctx, "Template URL", cfg.Template.URL)
+
+	templateUrl, err := s.inputService.Ask(ctx, "Template URL", cfg.Template.URL())
 	if err != nil {
 		return nil, err
 	}
-	cfg.Technology.Stack, err = s.inputService.Ask(ctx, "Technology Stack", cfg.Technology.Stack)
-	if err != nil {
-		return nil, err
-	}
-	cfg.Technology.Infrastructure, err = s.inputService.Ask(ctx, "Technology Infrastructure", cfg.Technology.Infrastructure)
+	cfg.Template = proVos.NewTemplate(templateUrl, "")
+
+	cfg.Runtime.CoreVersion, err = s.inputService.Ask(ctx, "Runtime Core Version", cfg.Runtime.CoreVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -108,6 +107,7 @@ func (s *InitService) gatherConfigFromUser(ctx context.Context) (*proVos.Config,
 	if err != nil {
 		return nil, err
 	}
+
 	cfg.Runtime.Image.Tag, err = s.inputService.Ask(ctx, "Runtime Image Tag", cfg.Runtime.Image.Tag)
 	if err != nil {
 		return nil, err
@@ -121,33 +121,23 @@ func (s *InitService) gatherConfigFromUser(ctx context.Context) (*proVos.Config,
 }
 
 func (s *InitService) gatherDefaultConfig() *proVos.Config {
-	return &proVos.Config{
-		Project: proVos.Project{
+	return &proVos.Config {
+		Project: proVos.Project {
 			Name:         s.projectName,
 			Version:      proVos.DefaultProjectVersion,
 			Team:         proVos.DefaultProjectTeam,
 			Description:  proVos.DefaultProjectDescription,
 			Organization: proVos.DefaultProjectOrganization,
 		},
-		Template: proVos.Template{
-			URL: proVos.DefaultUrl,
-			Ref: proVos.DefaultRef,
-		},
-		Technology: proVos.Technology{
-			Stack:          proVos.DefaultStack,
-			Infrastructure: proVos.DefaultInfrastructure,
-		},
-		Runtime: proVos.Runtime{
-			Image: proVos.Image{
+		Template: proVos.NewTemplate(proVos.DefaultUrl, proVos.DefaultRef),
+		Runtime: proVos.Runtime {
+			CoreVersion: proVos.DefaultCoreVersion,
+			Image: proVos.Image {
 				Source: proVos.DefaultImageSource,
 				Tag:    proVos.DefaultImageTag,
 			},
-			Volumes: proVos.Volumes{
-				ProjectMountPath: proVos.DefaultProjectMountPath,
-				StateMountPath:   proVos.DefaultStateMountPath,
-			},
 		},
-		State: proVos.State{
+		State: proVos.State {
 			Backend: proVos.DefaultStateBackend,
 			URL:     proVos.DefaultStateURL,
 		},

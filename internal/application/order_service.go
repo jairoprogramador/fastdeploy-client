@@ -24,7 +24,7 @@ type OrderService struct {
 	logMessage        appPor.LogMessage
 }
 
-func NewOrderService (
+func NewOrderService(
 	isTerminal bool,
 	workDir string,
 	fastdeployHome string,
@@ -32,7 +32,7 @@ func NewOrderService (
 	dockerService docPor.DockerService,
 	logMessage appPor.LogMessage,
 ) *OrderService {
-	return &OrderService {
+	return &OrderService{
 		isTerminal:        isTerminal,
 		workDir:           workDir,
 		fastdeployHome:    fastdeployHome,
@@ -91,7 +91,7 @@ func (s *OrderService) ExecuteOrder(ctx context.Context, order, env string, with
 func (s *OrderService) prepareBuildOptions(fileConfig *proVos.Config) (docVos.BuildOptions, docVos.Image) {
 	localImageName := fmt.Sprintf("%s-%s",
 		fileConfig.Project.Team,
-		fileConfig.Technology.Stack,
+		fileConfig.Template.NameTemplate(),
 	)
 	localImage := docVos.Image{
 		Name: localImageName,
@@ -114,29 +114,43 @@ func (s *OrderService) prepareBuildOptions(fileConfig *proVos.Config) (docVos.Bu
 	}, localImage
 }
 
-func (s *OrderService) prepareRunOptions(cfg *proVos.Config, image docVos.Image, workDir, order, env string, withTty bool) docVos.RunOptions {
+func (s *OrderService) prepareRunOptions(fileConfig *proVos.Config, image docVos.Image, workDir, order, env string, withTty bool) docVos.RunOptions {
 
-	if cfg.Runtime.Volumes.ProjectMountPath == "" {
-		cfg.Runtime.Volumes.ProjectMountPath = proVos.DefaultProjectMountPath
+	volumesMap := make(map[string]string)
+
+	for _, volume := range fileConfig.Runtime.Volumes {
+		volumesMap[volume.Host] = volume.Container
 	}
 
-	volumes := []docVos.Volume{
-		{HostPath: workDir, ContainerPath: cfg.Runtime.Volumes.ProjectMountPath},
+	projectContainerPath, okProjectContainerPath := volumesMap[proVos.ProjectPathKey]
+	if !okProjectContainerPath {
+		volumesMap[workDir] = proVos.DefaultContainerProjectPath
+	} else {
+		volumesMap[workDir] = projectContainerPath
+		delete(volumesMap, proVos.ProjectPathKey)
 	}
 
 	envVars := make(map[string]string)
 
-	if cfg.State.Backend == proVos.DefaultStateBackend {
+	if fileConfig.State.Backend == proVos.DefaultStateBackend {
 
-		if cfg.Runtime.Volumes.StateMountPath == "" {
-			cfg.Runtime.Volumes.StateMountPath = proVos.DefaultStateMountPath
+		stateContainerPath, okStateContainerPath := volumesMap[proVos.StatePathKey]
+		if !okStateContainerPath {
+			volumesMap[s.fastdeployHome] = proVos.DefaultContainerStatePath
+		} else {
+			volumesMap[s.fastdeployHome] = stateContainerPath
+			delete(volumesMap, proVos.StatePathKey)
 		}
 
+		envVars["FASTDEPLOY_HOME"] = volumesMap[s.fastdeployHome]
+	}
+
+	volumes := make([]docVos.Volume, 0, len(volumesMap))
+	for hostPath, containerPath := range volumesMap {
 		volumes = append(volumes, docVos.Volume{
-			HostPath:      s.fastdeployHome,
-			ContainerPath: cfg.Runtime.Volumes.StateMountPath,
+			HostPath:      hostPath,
+			ContainerPath: containerPath,
 		})
-		envVars["FASTDEPLOY_HOME"] = cfg.Runtime.Volumes.StateMountPath
 	}
 
 	allocateTty := withTty && s.isTerminal

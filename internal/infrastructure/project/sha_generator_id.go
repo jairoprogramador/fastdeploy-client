@@ -17,9 +17,8 @@ func NewShaGeneratorID() services.GeneratorID {
 
 func (g *ShaGeneratorID) ProjectID(config *vos.Config) string {
 	fields := []string{
-		fmt.Sprintf("template:%s", config.Template.URL),
-		fmt.Sprintf("stack:%s", config.Technology.Stack),
-		fmt.Sprintf("infrastructure:%s", config.Technology.Infrastructure),
+		fmt.Sprintf("template:%s", config.Template.URL()),
+		fmt.Sprintf("template_name:%s", config.Template.NameTemplate()),
 	}
 	sort.Strings(fields)
 

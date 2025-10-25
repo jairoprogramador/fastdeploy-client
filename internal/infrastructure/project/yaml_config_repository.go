@@ -1,4 +1,3 @@
-// Package project provides infrastructure implementations for the project domain.
 package project
 
 import (
@@ -23,10 +22,11 @@ func NewYAMLProjectRepository(workDir string) ports.ProjectRepository {
 }
 
 func (r *yamlProjectRepository) Save(config *vos.Config) error {
-	data, err := yaml.Marshal(config)
+	data, err := yaml.Marshal(mapper.ToDto(config))
 	if err != nil {
 		return err
 	}
+	
 	return os.WriteFile(r.filePath(), data, 0644)
 }
 
