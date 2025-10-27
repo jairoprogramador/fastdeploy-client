@@ -1,10 +1,11 @@
 package dto
 
 type FileConfig struct {
-	Project ProjectDTO `yaml:"project"`
+	Project  ProjectDTO  `yaml:"project"`
 	Template TemplateDTO `yaml:"template"`
-	Runtime RuntimeDTO `yaml:"runtime"`
-	State StateDTO `yaml:"state"`
+	Runtime  RuntimeDTO  `yaml:"runtime"`
+	State    StateDTO    `yaml:"state"`
+	Auth     AuthDTO     `yaml:"auth"`
 }
 
 type ProjectDTO struct {
@@ -22,14 +23,33 @@ type TemplateDTO struct {
 }
 
 type RuntimeDTO struct {
-	CoreVersion string `yaml:"core_version"`
-	Image       ImageDTO `yaml:"image"`
+	CoreVersion string      `yaml:"core_version"`
+	Image       ImageDTO    `yaml:"image"`
 	Volumes     []VolumeDTO `yaml:"volumes,omitempty"`
+	Env         []EnvVarDTO `yaml:"env,omitempty"`
 }
 
 type StateDTO struct {
 	Backend string `yaml:"backend"`
 	URL     string `yaml:"url"`
+}
+
+type AuthDTO struct {
+	Plugin string        `yaml:"plugin"`
+	Params AuthParamsDTO `yaml:"params"`
+}
+
+type AuthParamsDTO struct {
+	ClientID  string              `yaml:"client_id"`
+	ClientSecret string           `yaml:"client_secret"`
+	GrantType string              `yaml:"grant_type"`
+	Scope     string              `yaml:"scope"`
+	Extra     []map[string]string `yaml:"extra,omitempty"`
+}
+
+type EnvVarDTO struct {
+	Name  string `yaml:"name"`
+	Value string `yaml:"value"`
 }
 
 type ImageDTO struct {

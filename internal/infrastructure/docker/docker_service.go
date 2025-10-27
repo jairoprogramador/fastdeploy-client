@@ -67,6 +67,11 @@ func (s *DockerService) Run(ctx context.Context, opts docVos.RunOptions) error {
 	if opts.RemoveOnExit {
 		commandBuilder.WriteString(" --rm")
 	}
+
+	for _, value := range opts.Groups {
+		commandBuilder.WriteString(fmt.Sprintf(" --group-add %s", value))
+	}
+
 	if opts.Interactive {
 		commandBuilder.WriteString(" -i")
 	}
@@ -95,3 +100,12 @@ func (s *DockerService) Run(ctx context.Context, opts docVos.RunOptions) error {
 	s.logger.Detail("Run image successful")
 	return nil
 }
+
+   /*  docker run --rm \
+      -e ARM_ACCESS_TOKEN="<pega-el-token-aqui>" \
+      -e ARM_SUBSCRIPTION_ID="<tu-id-de-suscripcion>" \
+      -e FASTDEPLOY_HOME=/home/fastdeploy/.fastdeploy \
+      -v /home/jairo/.m2/:/home/fastdeploy/.m2 \
+      -v /home/jairo/Developer/java/test:/home/fastdeploy/app \
+      -v /home/jairo/Developer/go/dirFastDeploy:/home/fastdeploy/.fastdeploy \
+      shikigami-mydeploy:latest test . */

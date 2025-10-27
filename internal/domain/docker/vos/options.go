@@ -16,4 +16,5 @@ type RunOptions struct {
 	AllocateTTY  bool
 	RemoveOnExit bool
 	WorkDir      string
+	Groups       []string
 }

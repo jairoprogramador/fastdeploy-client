@@ -1,4 +1,3 @@
-// Package mapper provides functions to map between DTOs and domain models.
 package mapper
 
 import (
@@ -20,6 +19,21 @@ func ToDomain(configDto dto.FileConfig) *vos.Config {
 		})
 	}
 
+	extraParams := make(map[string]string)
+	for _, item := range configDto.Auth.Params.Extra {
+		for key, value := range item {
+			extraParams[key] = value
+		}
+	}
+
+	domainEnvVars := make([]vos.EnvVar, 0, len(configDto.Runtime.Env))
+	for _, dtoEnv := range configDto.Runtime.Env {
+		domainEnvVars = append(domainEnvVars, vos.EnvVar{
+			Name:  dtoEnv.Name,
+			Value: dtoEnv.Value,
+		})
+	}
+
 	return &vos.Config{
 		Project: vos.Project{
 			ID:           configDto.Project.ID,
@@ -37,10 +51,21 @@ func ToDomain(configDto dto.FileConfig) *vos.Config {
 				Tag:    configDto.Runtime.Image.Tag,
 			},
 			Volumes: domainVolumes,
+			Env:     domainEnvVars,
 		},
 		State: vos.State{
 			Backend: configDto.State.Backend,
 			URL:     configDto.State.URL,
+		},
+		Auth: vos.Auth{
+			Plugin: configDto.Auth.Plugin,
+			Params: vos.AuthParams{
+				ClientID:     configDto.Auth.Params.ClientID,
+				GrantType:    configDto.Auth.Params.GrantType,
+				ClientSecret: configDto.Auth.Params.ClientSecret,
+				Scope:        configDto.Auth.Params.Scope,
+				Extra:        extraParams,
+			},
 		},
 	}
 }
@@ -49,11 +74,25 @@ func ToDto(config *vos.Config) dto.FileConfig {
 
 	dtoVolumes := make([]dto.VolumeDTO, 0, len(config.Runtime.Volumes))
 	for _, vol := range config.Runtime.Volumes {
-		dtoVolumes = append(dtoVolumes, dto.VolumeDTO {
+		dtoVolumes = append(dtoVolumes, dto.VolumeDTO{
 			Host:      vol.Host,
 			Container: vol.Container,
 		})
 	}
+
+	dtoExtraParams := make([]map[string]string, 0, len(config.Auth.Params.Extra))
+	for key, value := range config.Auth.Params.Extra {
+		dtoExtraParams = append(dtoExtraParams, map[string]string{key: value})
+	}
+
+	dtoEnvVars := make([]dto.EnvVarDTO, 0, len(config.Runtime.Env))
+	for _, envVar := range config.Runtime.Env {
+		dtoEnvVars = append(dtoEnvVars, dto.EnvVarDTO{
+			Name:  envVar.Name,
+			Value: envVar.Value,
+		})
+	}
+
 	dtoConfig := dto.FileConfig{
 		Project: dto.ProjectDTO{
 			ID:           config.Project.ID,
@@ -74,10 +113,20 @@ func ToDto(config *vos.Config) dto.FileConfig {
 				Tag:    config.Runtime.Image.Tag,
 			},
 			Volumes: dtoVolumes,
+			Env:     dtoEnvVars,
 		},
 		State: dto.StateDTO{
 			Backend: config.State.Backend,
 			URL:     config.State.URL,
+		},
+		Auth: dto.AuthDTO{
+			Plugin: config.Auth.Plugin,
+			Params: dto.AuthParamsDTO{
+				ClientID:     config.Auth.Params.ClientID,
+				GrantType:    config.Auth.Params.GrantType,
+				ClientSecret: config.Auth.Params.ClientSecret,
+				Extra:        dtoExtraParams,
+			},
 		},
 	}
 	return dtoConfig

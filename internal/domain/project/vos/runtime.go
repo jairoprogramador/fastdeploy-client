@@ -20,6 +20,7 @@ type Runtime struct {
 	CoreVersion string
 	Image       Image
 	Volumes     []Volume
+	Env         []EnvVar
 }
 
 type Image struct {
@@ -30,4 +31,9 @@ type Image struct {
 type Volume struct {
 	Host      string
 	Container string
+}
+
+type EnvVar struct {
+	Name  string
+	Value string
 }
