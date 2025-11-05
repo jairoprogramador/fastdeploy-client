@@ -60,7 +60,7 @@ func (s *ExecutorService) Run(ctx context.Context, command, environment string, 
 	}
 	runLog := s.logger.Start(logContext)
 
-	runRecord, err := s.logger.AddRun(runLog, "executor")
+	runRecord, err := s.logger.AddRun(runLog, "execution")
 	if err != nil {
 		return runLog, err
 	}

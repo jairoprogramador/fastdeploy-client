@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/fatih/color"
-	
+
 	appPor "github.com/jairoprogramador/fastdeploy/internal/application/ports"
 
 	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/aggregates"
@@ -17,8 +16,9 @@ import (
 )
 
 type failedInfo struct {
-	failedName string
-	failedErr  error
+	failedName   string
+	failedErr    error
+	failedOutput string
 }
 
 type ConsolePresenter struct {
@@ -50,27 +50,6 @@ func NewConsolePresenter() appPor.Presenter {
 	}
 }
 
-func (p *ConsolePresenter) header(log *aggregates.Logger) {
-	ctx := log.Context()
-	if len(ctx) > 0 {
-		keys := make([]string, 0, len(ctx))
-		longestKey := 0
-		for key := range ctx {
-			keys = append(keys, key)
-			if len(key) > longestKey {
-				longestKey = len(key)
-			}
-		}
-		sort.Strings(keys)
-
-		for _, key := range keys {
-			format := fmt.Sprintf("  %%-%ds: %%s\n", longestKey)
-			p.ctxKey.Fprintf(p.writer, format, key, p.ctxValue.Sprint(ctx[key]))
-		}
-	}
-	p.line()
-}
-
 func (p *ConsolePresenter) showRun(runRecord *entities.RunRecord) {
 	if runRecord.Status() == vos.Warning {
 		p.warning.Fprintf(p.writer, "<%s>: <WARNING>\n", strings.ToUpper(runRecord.Name()))
@@ -96,7 +75,7 @@ func (p *ConsolePresenter) showTask(taskRecord *entities.TaskRecord, runRecord *
 		p.success.Fprintf(p.writer, "<%s>: <%s> (%s)\n", strings.ToUpper(runRecord.Name()), strings.ToUpper(taskRecord.Name()), strings.ToUpper(taskRecord.Status().String()))
 	case vos.Failure:
 		p.failure.Fprintf(p.writer, "<%s>: <%s> (%s)\n", strings.ToUpper(runRecord.Name()), strings.ToUpper(taskRecord.Name()), strings.ToUpper(taskRecord.Status().String()))
-		p.failure.Fprintf(p.writer, "<%s>: <%s> (comando: %s)\n", strings.ToUpper(runRecord.Name()), strings.ToUpper(taskRecord.Name()), taskRecord.Command())
+		p.failure.Fprintf(p.writer, "<%s>: <%s> comando: %s\n", strings.ToUpper(runRecord.Name()), strings.ToUpper(taskRecord.Name()), taskRecord.Command())
 	case vos.Running:
 		p.running.Fprintf(p.writer, "<%s>: <%s> (%s)\n", strings.ToUpper(runRecord.Name()), strings.ToUpper(taskRecord.Name()), strings.ToUpper(taskRecord.Status().String()))
 	default:
@@ -111,6 +90,7 @@ func (p *ConsolePresenter) finalSummary(log *aggregates.Logger) {
 			faileds = append(faileds, failedInfo{
 				failedName: step.Name(),
 				failedErr:  step.Error(),
+				failedOutput: step.Result(),
 			})
 		}
 
@@ -119,6 +99,7 @@ func (p *ConsolePresenter) finalSummary(log *aggregates.Logger) {
 				faileds = append(faileds, failedInfo{
 					failedName: task.Name(),
 					failedErr:  task.Error(),
+					failedOutput: task.OutputString(),
 				})
 			}
 		}
@@ -136,6 +117,9 @@ func (p *ConsolePresenter) renderErrors(faileds []failedInfo) {
 		p.failure.Fprintf(p.writer, "● error in: %s\n", failed.failedName)
 		if failed.failedErr != nil {
 			p.errorBody.Fprintf(p.writer, "  %s\n\n", failed.failedErr.Error())
+		}
+		if failed.failedOutput != "" {
+			p.errorBody.Fprintf(p.writer, "  %s\n\n", failed.failedOutput)
 		}
 	}
 }
@@ -161,7 +145,6 @@ func (p *ConsolePresenter) Render(log *aggregates.Logger) {
 			}
 		}
 	} else {
-		p.header(log)
 		for _, runRecord := range log.RunRecords() {
 			p.showRun(runRecord)
 			for _, task := range runRecord.Tasks() {

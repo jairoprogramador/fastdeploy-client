@@ -33,6 +33,7 @@ func (s *DockerService) Check(ctx context.Context, stepRecord *domEnt.RunRecord)
 		taskRecord.MarkAsFailure(err)
 		return err
 	}
+	taskRecord.MarkAsSuccess()
 	return nil
 }
 
@@ -62,6 +63,7 @@ func (s *DockerService) Build(ctx context.Context, opts docVos.BuildOptions, ste
 		taskRecord.MarkAsFailure(err)
 		return err
 	}
+	taskRecord.MarkAsSuccess()
 	return nil
 }
 
@@ -108,5 +110,6 @@ func (s *DockerService) Run(ctx context.Context, opts docVos.RunOptions, stepRec
 		taskRecord.MarkAsFailure(err)
 		return "", err
 	}
+	taskRecord.MarkAsSuccess()
 	return output, nil
 }

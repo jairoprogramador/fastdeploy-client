@@ -2,6 +2,7 @@ package entities
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/vos"
@@ -47,6 +48,14 @@ func (t *TaskRecord) SetCommand(command string) {
 
 func (t *TaskRecord) Output() []vos.OutputLine {
 	return t.output
+}
+
+func (t *TaskRecord) OutputString() string {
+	outputStrings := make([]string, len(t.output))
+	for i, output := range t.output {
+		outputStrings[i] = output.Line()
+	}
+	return strings.Join(outputStrings, "\n")
 }
 
 func (t *TaskRecord) Error() error {
