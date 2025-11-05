@@ -1,0 +1,44 @@
+project:
+    id: 63a99d77511c8f1418d14ea67e3b53cda45617f70dd33430c8b68d909dfa3a32
+    name: test
+    version: 1.0.0
+    team: shikigami
+    description: mi despliegue con fastdeploy
+    organization: fastdeploy
+
+template:
+    url: https://github.com/jairoprogramador/mydeploy.git
+    ref: main
+
+# auth:
+#   plugin: "azure"
+#   params:
+#     client_id: "{env.AZURE_CLIENT_ID}"
+#     grant_type: "AUTH_GRANT_TYPE_CLIENT_CREDENTIALS"
+#     client_secret: "{env.AZURE_CLIENT_SECRET}"
+#     extra:
+#       - tenant_id: "{env.AZURE_TENANT_ID}"
+
+runtime:
+    core_version: 1.0.3
+    image:
+        #source: fastdeploy/runner-java17-springboot
+        tag: latest
+    volumes:
+      - host: /home/jairo/.m2/
+        container: /home/fastdeploy/.m2
+      - host: /var/run/docker.sock
+        container: /var/run/docker.sock
+    env:
+      - name: "ARM_CLIENT_ID"
+        value: "{env.AZURE_CLIENT_ID}"
+      - name: "ARM_CLIENT_SECRET"
+        value: "{env.AZURE_CLIENT_SECRET}"
+      - name: "ARM_TENANT_ID"
+        value: "{env.AZURE_TENANT_ID}"
+      - name: "ARM_SUBSCRIPTION_ID"
+        value: "{env.AZURE_SUBSCRIPTION_ID}"
+
+state:
+    backend: local
+    url: ""
