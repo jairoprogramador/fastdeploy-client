@@ -1,7 +1,7 @@
 package vos
 
 const (
-	DefaultCoreVersion = "latest"
+	DefaultCoreVersion = "1.0.6"
 	DefaultImageSource = "jairoprogramador/fdrunjava17azure"
 	DefaultImageTag    = "latest"
 )

@@ -2,11 +2,13 @@ package application
 
 import (
 	"context"
+	"fmt"
+	"runtime"
 
+	logAgg "github.com/jairoprogramador/fastdeploy/internal/domain/logger/aggregates"
 	proPor "github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
 	proSer "github.com/jairoprogramador/fastdeploy/internal/domain/project/services"
 	proVos "github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
-	logAgg "github.com/jairoprogramador/fastdeploy/internal/domain/logger/aggregates"
 
 	appPor "github.com/jairoprogramador/fastdeploy/internal/application/ports"
 )
@@ -17,6 +19,7 @@ type InitializeService struct {
 	projectRepository proPor.ProjectRepository
 	inputService      proPor.UserInputService
 	projectName       string
+	coreVersion       appPor.CoreVersion
 	generatorID       proSer.GeneratorID
 	logger            appPor.Logger
 }
@@ -25,12 +28,14 @@ func NewInitializeService(
 	projectName string,
 	repository proPor.ProjectRepository,
 	inputSvc proPor.UserInputService,
+	coreVersion appPor.CoreVersion,
 	generatorID proSer.GeneratorID,
 	logger appPor.Logger) *InitializeService {
 	return &InitializeService{
 		projectRepository: repository,
 		inputService:      inputSvc,
 		projectName:       projectName,
+		coreVersion:       coreVersion,
 		generatorID:       generatorID,
 		logger:            logger,
 	}
@@ -84,6 +89,16 @@ func (s *InitializeService) Run(ctx context.Context, interactive bool) (*logAgg.
 func (s *InitializeService) gatherConfigFromUser(ctx context.Context) (*proVos.Config, error) {
 	cfg := s.gatherDefaultConfig()
 
+	versionCore := cfg.Runtime.CoreVersion
+	latestCoreVersion, errVersion := s.coreVersion.GetLatestVersion()
+	if errVersion != nil {
+		fmt.Println("no se pudo obtener la versión más reciente del core:", errVersion)
+	} else {
+		if latestCoreVersion != "" {
+			versionCore = latestCoreVersion
+		}
+	}
+
 	var err error
 
 	cfg.Project.Name, err = s.inputService.Ask(ctx, "Project Name", cfg.Project.Name)
@@ -109,7 +124,7 @@ func (s *InitializeService) gatherConfigFromUser(ctx context.Context) (*proVos.C
 	}
 	cfg.Template = proVos.NewTemplate(templateUrl, "")
 
-	cfg.Runtime.CoreVersion, err = s.inputService.Ask(ctx, "Runtime Core Version", cfg.Runtime.CoreVersion)
+	cfg.Runtime.CoreVersion, err = s.inputService.Ask(ctx, "Runtime Core Version", versionCore)
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +137,11 @@ func (s *InitializeService) gatherConfigFromUser(ctx context.Context) (*proVos.C
 	if err != nil {
 		return nil, err
 	}
+
+	cfg.Runtime.Volumes = s.getVolumes()
+
+	cfg.Runtime.Env = s.getEnvVars()
+
 	cfg.State.Backend, err = s.inputService.Ask(ctx, "State Backend", cfg.State.Backend)
 	if err != nil {
 		return nil, err
@@ -152,4 +172,45 @@ func (s *InitializeService) gatherDefaultConfig() *proVos.Config {
 			URL:     proVos.DefaultStateURL,
 		},
 	}
+}
+
+func (s *InitializeService) getVolumes() []proVos.Volume {
+	var homeM2Path string
+	if runtime.GOOS == "windows" {
+		homeM2Path = "%USERPROFILE%\\.m2\\"
+	} else {
+		homeM2Path = "$HOME/.m2/"
+	}
+
+	volumes := make([]proVos.Volume, 2)
+	volumes[0] = proVos.Volume{
+		Host:      homeM2Path,
+		Container: "/home/fastdeploy/.m2",
+	}
+	volumes[1] = proVos.Volume{
+		Host:      "/var/run/docker.sock",
+		Container: "/var/run/docker.sock",
+	}
+	return volumes
+}
+
+func (s *InitializeService) getEnvVars() []proVos.EnvVar {
+	env := make([]proVos.EnvVar, 4)
+	env[0] = proVos.EnvVar{
+		Name:  "ARM_CLIENT_ID",
+		Value: "{env.AZURE_CLIENT_ID}",
+	}
+	env[1] = proVos.EnvVar{
+		Name:  "ARM_CLIENT_SECRET",
+		Value: "{env.AZURE_CLIENT_SECRET}",
+	}
+	env[2] = proVos.EnvVar{
+		Name:  "ARM_TENANT_ID",
+		Value: "{env.AZURE_TENANT_ID}",
+	}
+	env[3] = proVos.EnvVar{
+		Name:  "ARM_SUBSCRIPTION_ID",
+		Value: "{env.AZURE_SUBSCRIPTION_ID}",
+	}
+	return env
 }

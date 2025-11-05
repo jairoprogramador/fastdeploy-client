@@ -5,7 +5,7 @@ type FileConfig struct {
 	Template TemplateDTO `yaml:"template"`
 	Runtime  RuntimeDTO  `yaml:"runtime"`
 	State    StateDTO    `yaml:"state"`
-	Auth     AuthDTO     `yaml:"auth"`
+	Auth     AuthDTO     `yaml:"auth,omitempty"`
 }
 
 type ProjectDTO struct {
@@ -35,16 +35,16 @@ type StateDTO struct {
 }
 
 type AuthDTO struct {
-	Plugin string        `yaml:"plugin"`
-	Params AuthParamsDTO `yaml:"params"`
+	Plugin string        `yaml:"plugin,omitempty"`
+	Params AuthParamsDTO `yaml:"params,omitempty"`
 }
 
 type AuthParamsDTO struct {
-	ClientID  string              `yaml:"client_id"`
-	ClientSecret string           `yaml:"client_secret"`
-	GrantType string              `yaml:"grant_type"`
-	Scope     string              `yaml:"scope"`
-	Extra     []map[string]string `yaml:"extra,omitempty"`
+	ClientID     string              `yaml:"client_id"`
+	ClientSecret string              `yaml:"client_secret"`
+	GrantType    string              `yaml:"grant_type"`
+	Scope        string              `yaml:"scope"`
+	Extra        []map[string]string `yaml:"extra,omitempty"`
 }
 
 type EnvVarDTO struct {

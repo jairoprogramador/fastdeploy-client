@@ -14,6 +14,7 @@ import (
 	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/project"
 	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/variable"
 	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/logger"
+	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/app"
 	"github.com/mattn/go-isatty"
 )
 
@@ -44,7 +45,8 @@ func (f *serviceFactory) BuildInitService() (*applic.InitializeService, error) {
 	appLogger := applic.NewAppLogger()
 
 	inputService := project.NewSurveyUserInputService()
-	return applic.NewInitializeService(filepath.Base(workDir), projectRepository, inputService, generatorID, appLogger), nil
+	coreVersion := app.NewGithubCoreVersion()
+	return applic.NewInitializeService(filepath.Base(workDir), projectRepository, inputService, coreVersion, generatorID, appLogger), nil
 }
 
 func (f *serviceFactory) BuildOrderService() (*applic.ExecutorService, error) {
