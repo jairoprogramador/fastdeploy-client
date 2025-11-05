@@ -8,7 +8,7 @@ import (
 
 	"github.com/fatih/color"
 
-	appPor "github.com/jairoprogramador/fastdeploy/internal/application/ports"
+	"github.com/jairoprogramador/fastdeploy/internal/application/ports"
 
 	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/aggregates"
 	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/entities"
@@ -35,7 +35,7 @@ type ConsolePresenter struct {
 	errorBody  *color.Color
 }
 
-func NewConsolePresenter() appPor.Presenter {
+func NewConsolePresenter() ports.Presenter {
 	return &ConsolePresenter{
 		writer:     os.Stdout,
 		ctxKey:     color.New(color.FgYellow),

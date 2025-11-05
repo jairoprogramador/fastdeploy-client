@@ -1,8 +1,8 @@
 package vos
 
 const (
-	DefaultCoreVersion = "1.0.3"
-	DefaultImageSource = "fastdeploy/runner-java17-springboot"
+	DefaultCoreVersion = "latest"
+	DefaultImageSource = "jairoprogramador/fdrunjava17azure"
 	DefaultImageTag    = "latest"
 )
 
