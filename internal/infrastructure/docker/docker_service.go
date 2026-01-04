@@ -37,7 +37,7 @@ func (s *DockerService) Check(ctx context.Context, stepRecord *domEnt.RunRecord)
 	return nil
 }
 
-func (s *DockerService) Build(ctx context.Context, opts docVos.BuildOptions, stepRecord *domEnt.RunRecord) error {
+func (s *DockerService) Build(ctx context.Context, opts docVos.ImageOptions, stepRecord *domEnt.RunRecord) error {
 	taskRecord, _ := domEnt.NewTaskRecord("build image")
 	stepRecord.AddTask(taskRecord)
 
@@ -67,7 +67,7 @@ func (s *DockerService) Build(ctx context.Context, opts docVos.BuildOptions, ste
 	return nil
 }
 
-func (s *DockerService) Run(ctx context.Context, opts docVos.RunOptions, stepRecord *domEnt.RunRecord) (string, error) {
+func (s *DockerService) Run(ctx context.Context, opts docVos.ContainerOptions, stepRecord *domEnt.RunRecord) (string, error) {
 	taskRecord, _ := domEnt.NewTaskRecord("run container")
 	stepRecord.AddTask(taskRecord)
 

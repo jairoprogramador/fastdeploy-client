@@ -1,11 +1,12 @@
 package project
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 
+	"github.com/jairoprogramador/fastdeploy/internal/domain/project/aggregates"
 	"github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
 	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/project/dto"
 	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/project/mapper"
 	"gopkg.in/yaml.v3"
@@ -14,24 +15,24 @@ import (
 const configFileName = "fdconfig.yaml"
 
 type yamlProjectRepository struct {
-	workDir string
+	projectPath string
 }
 
-func NewYAMLProjectRepository(workDir string) ports.ProjectRepository {
-	return &yamlProjectRepository{workDir: workDir}
+func NewYAMLProjectRepository(projectPath string) ports.ProjectRepository {
+	return &yamlProjectRepository{projectPath: projectPath}
 }
 
-func (r *yamlProjectRepository) Save(config *vos.Config) error {
-	data, err := yaml.Marshal(mapper.ToDto(config))
+func (r *yamlProjectRepository) Save(project *aggregates.Project) error {
+	fdConfig := mapper.ToDto(project)
+	data, err := yaml.Marshal(fdConfig)
 	if err != nil {
 		return err
 	}
-	
-	return os.WriteFile(r.filePath(), data, 0644)
+	return os.WriteFile(r.fdconfigPath(), data, 0644)
 }
 
 func (r *yamlProjectRepository) Exists() (bool, error) {
-	_, err := os.Stat(r.filePath())
+	_, err := os.Stat(r.fdconfigPath())
 	if err == nil {
 		return true, nil
 	}
@@ -41,23 +42,23 @@ func (r *yamlProjectRepository) Exists() (bool, error) {
 	return false, err
 }
 
-func (r *yamlProjectRepository) Load() (*vos.Config, error) {
-	data, err := os.ReadFile(r.filePath())
+func (r *yamlProjectRepository) Load() (*aggregates.Project, error) {
+	data, err := os.ReadFile(r.fdconfigPath())
 	if err != nil {
 		if os.IsNotExist(err) {
-			return mapper.ToDomain(dto.FileConfig{}), nil
+			return nil, errors.New("project configuration file not found")
 		}
 		return nil, err
 	}
 
-	var fileConfig dto.FileConfig
-	if err := yaml.Unmarshal(data, &fileConfig); err != nil {
+	var fdConfig dto.FDConfigDTO
+	if err := yaml.Unmarshal(data, &fdConfig); err != nil {
 		return nil, err
 	}
 
-	return mapper.ToDomain(fileConfig), nil
+	return mapper.ToDomain(fdConfig)
 }
 
-func (r *yamlProjectRepository) filePath() string {
-	return filepath.Join(r.workDir, configFileName)
+func (r *yamlProjectRepository) fdconfigPath() string {
+	return filepath.Join(r.projectPath, configFileName)
 }

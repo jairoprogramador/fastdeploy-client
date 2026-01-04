@@ -1,14 +1,14 @@
 package vos
 
 type Auth struct {
-	Plugin string
-	Params AuthParams
+	plugin string
+	params AuthParams
 }
 
-type AuthParams struct {
-	ClientID     string
-	GrantType    string
-	ClientSecret string
-	Scope        string
-	Extra        map[string]string
+func NewAuth(plugin string, params AuthParams) Auth {
+	return Auth{plugin: plugin, params: params}
 }
+
+func (a Auth) Plugin() string { return a.plugin }
+func (a Auth) Params() AuthParams { return a.params }
+
