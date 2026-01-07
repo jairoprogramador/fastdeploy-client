@@ -7,6 +7,6 @@ import (
 
 // ImageService define el contrato para la lógica de construcción de opciones de imagen.
 type ImageService interface {
-	CreateOptions(project *proAgg.Project) (vos.ImageOptions, error)
-	BuildCommand(opts vos.ImageOptions) (string, error)
+	CreateOptions(project *proAgg.Project) (vos.BuildOptions, error)
+	BuildCommand(opts vos.BuildOptions) (string, error)
 }

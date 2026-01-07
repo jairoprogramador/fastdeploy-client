@@ -3,47 +3,42 @@ package application
 import (
 	"context"
 	"errors"
+	"fmt"
 
-	appPor "github.com/jairoprogramador/fastdeploy/internal/application/ports"
-	docAgg "github.com/jairoprogramador/fastdeploy/internal/domain/docker/aggregates"
 	docPor "github.com/jairoprogramador/fastdeploy/internal/domain/docker/ports"
+	docVos "github.com/jairoprogramador/fastdeploy/internal/domain/docker/vos"
 	proPor "github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
+	proVos "github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
 )
 
 const MessageProjectNotInitialized = "project not initialized. Please run 'fd init' first"
 
 type ExecutorService struct {
-	projectRepository  proPor.ProjectRepository
-	dockerService      docPor.DockerService
-	variableResolver   appPor.VarsResolver
-	coreVersion        appPor.CoreVersion
-	isTerminal         bool
-	hostProjectPath    string
-	hostFastdeployPath string
+	projectRepository proPor.ProjectRepository
+	commandExecutor   docPor.CommandExecutor
+	imageService      docPor.ImageService
+	containerService  docPor.ContainerService
 }
 
 func NewExecutorService(
-	isTerminal bool,
-	hostProjectPath string,
-	hostFastdeployPath string,
 	projectRepository proPor.ProjectRepository,
-	dockerService docPor.DockerService,
-	variableResolver appPor.VarsResolver,
-	coreVersion appPor.CoreVersion,
+	commandExecutor docPor.CommandExecutor,
+	imageService docPor.ImageService,
+	containerService docPor.ContainerService,
 ) *ExecutorService {
 	return &ExecutorService{
-		isTerminal:         isTerminal,
-		hostProjectPath:    hostProjectPath,
-		hostFastdeployPath: hostFastdeployPath,
-		projectRepository:  projectRepository,
-		dockerService:      dockerService,
-		variableResolver:   variableResolver,
-		coreVersion:        coreVersion,
+		projectRepository: projectRepository,
+		commandExecutor:   commandExecutor,
+		imageService:      imageService,
+		containerService:  containerService,
 	}
 }
 
-func (s *ExecutorService) Run(ctx context.Context, command, environment string, withTty bool) error {
-	// 1. Validación de pre-condiciones
+func (s *ExecutorService) Run(ctx context.Context, command, environment string) error {
+	if _, err := s.commandExecutor.Execute(ctx, "docker --version"); err != nil {
+		return err
+	}
+
 	exists, err := s.projectRepository.Exists()
 	if err != nil {
 		return err
@@ -52,51 +47,51 @@ func (s *ExecutorService) Run(ctx context.Context, command, environment string, 
 		return errors.New(MessageProjectNotInitialized)
 	}
 
-	if err := s.dockerService.Check(ctx); err != nil {
-		return err
-	}
-
-	// 2. Cargar el estado del dominio
 	project, err := s.projectRepository.Load()
 	if err != nil {
 		return err
 	}
 
-	latestCoreVersion, _ := s.coreVersion.GetLatestVersion()
+	var imageToUse docVos.ImageName
 
-	// 3. Delegar la lógica de negocio al dominio 'docker'
-	execution, err := docAgg.NewExecution(
-		project,
-		command,
-		environment,
-		s.hostProjectPath,
-		s.hostFastdeployPath,
-		s.isTerminal,
-		withTty,
-		latestCoreVersion,
-	)
+	imageInfo := project.Runtime().Image()
+
+	if imageInfo.Image() == proVos.DefaultContainerImage {
+		imageOptions, err := s.imageService.CreateOptions(project)
+		if err != nil {
+			return err
+		}
+
+		buildCommand, err := s.imageService.BuildCommand(imageOptions)
+		if err != nil {
+			return err
+		}
+
+		if _, err = s.commandExecutor.Execute(ctx, buildCommand); err != nil {
+			return err
+		}
+		imageToUse = imageOptions.Image()
+		fmt.Println("Image to use Dockerfile: ", imageToUse.FullName())
+	} else {
+		imageToUse, err = docVos.NewImageName(imageInfo.Image(), imageInfo.Tag())
+		if err != nil {
+			return err
+		}
+		fmt.Println("Image to use no Dockerfile: ", imageToUse.FullName())
+	}
+
+	commandFastdeploy := fmt.Sprintf("%s %s", command, environment)
+
+	containerOptions, err := s.containerService.CreateOptions(project, commandFastdeploy, imageToUse)
 	if err != nil {
 		return err
 	}
 
-	// 4. Orquestar la ejecución
-	if execution.NeedsBuild() {
-		buildOpts := execution.BuildOptions()
-		if err := s.dockerService.Build(ctx, *buildOpts); err != nil {
-			return err
-		}
+	runCommand, err := s.containerService.BuildCommand(containerOptions)
+	if err != nil {
+		return err
 	}
 
-	// La resolución de variables de entorno se queda en la capa de aplicación,
-	// ya que depende de variables internas que se generan en tiempo de ejecución (que ya no tenemos, como auth)
-	// pero que podrían existir en el futuro.
-	runOpts := execution.RunOptions()
-	resolvedEnvVars := make(map[string]string)
-	for name, value := range runOpts.EnvVars {
-		resolvedEnvVars[name] = s.variableResolver.Resolve(value, make(map[string]string))
-	}
-	runOpts.EnvVars = resolvedEnvVars
-
-	_, err = s.dockerService.Run(ctx, runOpts)
+	_, err = s.commandExecutor.Execute(ctx, runCommand)
 	return err
 }

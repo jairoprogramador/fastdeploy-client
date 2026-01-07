@@ -1,15 +1,17 @@
 package vos
 
 type Runtime struct {
-	container Container
+	image Image
 	volumes   []Volume
 	env       []EnvVar
+	args      []Argument
 }
 
-func NewRuntime(container Container, volumes []Volume, env []EnvVar) Runtime {
-	return Runtime{container: container, volumes: volumes, env: env}
+func NewRuntime(image Image, volumes []Volume, env []EnvVar, args []Argument) Runtime {
+	return Runtime{image: image, volumes: volumes, env: env, args: args}
 }
 
-func (r Runtime) Container() Container { return r.container }
-func (r Runtime) Volumes() []Volume    { return r.volumes }
-func (r Runtime) Env() []EnvVar        { return r.env }
+func (r Runtime) Image() Image  { return r.image }
+func (r Runtime) Volumes() []Volume { return r.volumes }
+func (r Runtime) Env() []EnvVar     { return r.env }
+func (r Runtime) Args() []Argument  { return r.args }

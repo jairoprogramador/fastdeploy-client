@@ -10,7 +10,6 @@ import (
 	proAgg "github.com/jairoprogramador/fastdeploy/internal/domain/project/aggregates"
 )
 
-
 // imageBuilder es la implementación del servicio de dominio.
 type imageBuilder struct{}
 
@@ -20,24 +19,29 @@ func NewImageBuilder() docPor.ImageService {
 }
 
 // CreateImageOptions encapsula la lógica de negocio para determinar cómo se debe construir una imagen.
-func (s *imageBuilder) CreateOptions(project *proAgg.Project) (docVos.ImageOptions, error) {
+func (s *imageBuilder) CreateOptions(project *proAgg.Project) (docVos.BuildOptions, error) {
 	localImageName := fmt.Sprintf("%s%s", project.Data().Name(), project.ID().String()[0:6])
-	imgName, err := docVos.NewImageName(localImageName, project.Runtime().Container().Tag())
+	imgName, err := docVos.NewImageName(localImageName, project.Runtime().Image().Tag())
 	if err != nil {
-		return docVos.ImageOptions{}, err
+		return docVos.BuildOptions{}, err
 	}
 
 	imgArgs := make(map[string]string)
 
 	if runtime.GOOS == "linux" {
 		imgArgs["DEV_GID"] = "$(id -g)"
+		imgArgs["DEV_UID"] = "$(id -u)"
 	}
-	imgArgs["FASTDEPLOY_VERSION"] = project.Runtime().Container().CoreVersion()
 
-	return docVos.NewImageOptions(imgName, project.Runtime().Container().Image(), imgArgs)
+	for _, arg := range project.Runtime().Args() {
+		imgArgs[arg.Name()] = arg.Value()
+	}
+
+	return docVos.NewBuildOptions(imgName, imgArgs)
 }
 
-func (s *imageBuilder) BuildCommand(opts docVos.ImageOptions) (string, error) {
+// BuildCommand devuelve el comando de build para la imagen.
+func (s *imageBuilder) BuildCommand(opts docVos.BuildOptions) (string, error) {
 	var commandBuilder strings.Builder
 	commandBuilder.WriteString("docker build")
 
@@ -46,8 +50,6 @@ func (s *imageBuilder) BuildCommand(opts docVos.ImageOptions) (string, error) {
 	}
 
 	commandBuilder.WriteString(fmt.Sprintf(" -t %s", opts.Image().FullName()))
-
-	commandBuilder.WriteString(fmt.Sprintf(" -f %s", opts.FileName()))
 
 	commandBuilder.WriteString(fmt.Sprintf(" %s", "."))
 

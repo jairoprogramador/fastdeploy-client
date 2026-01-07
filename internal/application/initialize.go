@@ -14,6 +14,7 @@ const MessageProjectAlreadyExists = "project already initialized, fdconfig.yaml 
 type InitializeService struct {
 	projectRepository proPor.ProjectRepository
 	inputService      proPor.UserInputService
+	versionService    proPor.Version
 	projectName       string
 }
 
@@ -21,10 +22,12 @@ func NewInitializeService(
 	projectName string,
 	repository proPor.ProjectRepository,
 	inputSvc proPor.UserInputService,
+	versionSvc proPor.Version,
 ) *InitializeService {
 	return &InitializeService{
 		projectRepository: repository,
 		inputService:      inputSvc,
+		versionService:    versionSvc,
 		projectName:       projectName,
 	}
 }
@@ -47,7 +50,12 @@ func (s *InitializeService) Run(ctx context.Context, interactive bool) error {
 
 	var project *proAgg.Project
 	if interactive {
-		project, err = s.createProjectFromUserInput(ctx)
+		/* version, err := s.versionService.GetLatest()
+		if err != nil {
+			version = proVos.DefaultContainerCoreVersion
+			fmt.Println("Advertencia!!: no se pudo obtener la versión más reciente del core, se usará la versión por defecto:", version)
+		} */
+		project, err = s.createProjectFromUserInput()
 		if err != nil {
 			return err
 		}
@@ -61,7 +69,7 @@ func (s *InitializeService) Run(ctx context.Context, interactive bool) error {
 	return s.projectRepository.Save(project)
 }
 
-func (s *InitializeService) createProjectFromUserInput(ctx context.Context) (*proAgg.Project, error) {
+func (s *InitializeService) createProjectFromUserInput() (*proAgg.Project, error) {
 	name, err := s.inputService.Ask("Project Name", s.projectName)
 	if err != nil {
 		return nil, err
@@ -90,14 +98,6 @@ func (s *InitializeService) createProjectFromUserInput(ctx context.Context) (*pr
 	if err != nil {
 		return nil, err
 	}
-	coreVersion, err := s.inputService.Ask("Core Version", proVos.DefaultContainerCoreVersion)
-	if err != nil {
-		return nil, err
-	}
-	stateBackend, err := s.inputService.Ask("State Backend", proVos.DefaultStateBackend)
-	if err != nil {
-		return nil, err
-	}
 
 	projectData, err := proVos.NewProjectData(name, org, team, "")
 	if err != nil {
@@ -109,26 +109,21 @@ func (s *InitializeService) createProjectFromUserInput(ctx context.Context) (*pr
 		return nil, err
 	}
 
-	container, err := proVos.NewContainer(containerImage, containerTag, coreVersion)
+	container, err := proVos.NewImage(containerImage, containerTag)
 	if err != nil {
 		return nil, err
 	}
 
-	runtime := proVos.NewRuntime(container, []proVos.Volume{}, []proVos.EnvVar{})
+	runtime := proVos.NewRuntime(container, []proVos.Volume{}, []proVos.EnvVar{}, []proVos.Argument{})
 
-	state, err := proVos.NewState(stateBackend, "")
-	if err != nil {
-		return nil, err
-	}
-
-	auth := proVos.NewAuth("", proVos.AuthParams{})
+	//auth := proVos.NewAuth("", proVos.AuthParams{})
 
 	projectID, err := s.getProjectID(projectData)
 	if err != nil {
 		return nil, err
 	}
 
-	return proAgg.NewProject(projectID, projectData, template, runtime, state, auth)
+	return proAgg.NewProject(projectID, projectData, template, runtime)
 }
 
 func (s *InitializeService) createDefaultProject() (*proAgg.Project, error) {
@@ -143,27 +138,21 @@ func (s *InitializeService) createDefaultProject() (*proAgg.Project, error) {
 		return nil, err
 	}
 
-	container, err := proVos.NewContainer(
-		proVos.DefaultContainerImage, proVos.DefaultContainerTag, proVos.DefaultContainerCoreVersion)
+	container, err := proVos.NewImage(proVos.DefaultContainerImage, proVos.DefaultContainerTag)
 	if err != nil {
 		return nil, err
 	}
 
-	runtime := proVos.NewRuntime(container, []proVos.Volume{}, []proVos.EnvVar{})
+	runtime := proVos.NewRuntime(container, []proVos.Volume{}, []proVos.EnvVar{}, []proVos.Argument{})
 
-	state, err := proVos.NewState(proVos.DefaultStateBackend, "")
-	if err != nil {
-		return nil, err
-	}
-
-	auth := proVos.NewAuth("", proVos.AuthParams{})
+	//auth := proVos.NewAuth("", proVos.AuthParams{})
 
 	projectID, err := s.getProjectID(projectData)
 	if err != nil {
 		return nil, err
 	}
 
-	return proAgg.NewProject(projectID, projectData, template, runtime, state, auth)
+	return proAgg.NewProject(projectID, projectData, template, runtime)
 }
 
 func (s *InitializeService) getProjectID(data proVos.ProjectData) (proVos.ProjectID, error) {

@@ -2,16 +2,15 @@ package aggregates
 
 import (
 	"errors"
+
 	"github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
 )
 
 type Project struct {
-	id        vos.ProjectID
-	data      vos.ProjectData
-	template  vos.Template
-	runtime   vos.Runtime
-	state     vos.State
-	auth      vos.Auth
+	id       vos.ProjectID
+	data     vos.ProjectData
+	template vos.Template
+	runtime  vos.Runtime
 }
 
 func NewProject(
@@ -19,28 +18,25 @@ func NewProject(
 	data vos.ProjectData,
 	template vos.Template,
 	runtime vos.Runtime,
-	state vos.State,
-	auth vos.Auth) (*Project, error) {
+	) (*Project, error) {
 	if template.URL() == "" {
 		return nil, errors.New("template is required")
 	}
 	if template.Ref() == "" {
 		return nil, errors.New("template ref is required")
 	}
-	if runtime.Container().Image() == "" {
-		return nil, errors.New("runtime container image is required")
+	if runtime.Image().Image() == "" {
+		return nil, errors.New("runtime image is required")
 	}
-	if runtime.Container().Tag() == "" {
-		return nil, errors.New("runtime container tag is required")
+	if runtime.Image().Tag() == "" {
+		return nil, errors.New("runtime image tag is required")
 	}
 	return &Project{
-		id: id,
-		data: data,
+		id:       id,
+		data:     data,
 		template: template,
-		runtime: runtime,
-		state: state,
-		auth: auth,
-		}, nil
+		runtime:  runtime,
+	}, nil
 }
 
 func (p *Project) IsIDDirty() bool {
@@ -68,10 +64,16 @@ func (p *Project) Runtime() vos.Runtime {
 	return p.runtime
 }
 
-func (p *Project) State() vos.State {
-	return p.state
-}
-
-func (p *Project) Auth() vos.Auth {
-	return p.auth
+func HydrateProject(
+	id vos.ProjectID,
+	data vos.ProjectData,
+	template vos.Template,
+	runtime vos.Runtime,
+) *Project {
+	return &Project{
+		id:       id,
+		data:     data,
+		template: template,
+		runtime:  runtime,
+	}
 }

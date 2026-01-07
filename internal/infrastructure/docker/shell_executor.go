@@ -1,4 +1,4 @@
-package executor
+package docker
 
 import (
 	"bufio"
@@ -10,52 +10,17 @@ import (
 	"os/exec"
 	"runtime"
 	"sync"
-	"time"
 
-	"github.com/briandowns/spinner"
+	"github.com/jairoprogramador/fastdeploy/internal/domain/docker/ports"
 )
-
-type CommandExecutor interface {
-	Execute(ctx context.Context, command string, workDir string) (string, error)
-	ExecuteContainer(ctx context.Context, command string, workDir string) (string, error)
-}
 
 type ShellExecutor struct{}
 
-func NewShellExecutor() CommandExecutor {
+func NewShellExecutor() ports.CommandExecutor {
 	return &ShellExecutor{}
 }
 
-func (e *ShellExecutor) Execute(ctx context.Context, command string, workDir string) (string, error) {
-	//fmt.Println("command", command)
-	sp := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
-	sp.Start()
-	defer sp.Stop()
-
-	var cmd *exec.Cmd
-	if runtime.GOOS == "linux" {
-		cmd = exec.CommandContext(ctx, "sh", "-c", command)
-	} else {
-		cmd = exec.CommandContext(ctx, "cmd", "/C", command)
-	}
-
-	var stdoutBuf, stderrBuf bytes.Buffer
-	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = &stderrBuf
-
-	if workDir != "" {
-		cmd.Dir = workDir
-	}
-
-	err := cmd.Run()
-
-	if err != nil {
-		return stderrBuf.String(), err
-	}
-	return stdoutBuf.String(), nil
-}
-
-func (s *ShellExecutor) ExecuteContainer(ctx context.Context, command string, workDir string) (string, error) {
+func (s *ShellExecutor) Execute(ctx context.Context, command string) (string, error) {
 	var cmd *exec.Cmd
 	if runtime.GOOS == "linux" {
 		cmd = exec.CommandContext(ctx, "sh", "-c", command)
