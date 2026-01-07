@@ -7,7 +7,6 @@ import (
 	app "github.com/jairoprogramador/fastdeploy/internal/application"
 	dockerDomain "github.com/jairoprogramador/fastdeploy/internal/domain/docker/services"
 	"github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
-	//"github.com/jairoprogramador/fastdeploy/internal/infrastructure/logger"
 	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/docker"
 	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/project"
 )
@@ -15,7 +14,6 @@ import (
 type ServiceFactory interface {
 	BuildExecutor() (*app.ExecutorService, error)
 	BuildInitialize() (*app.InitializeService, error)
-	//BuildPresenter() app.Presenter
 }
 
 type serviceFactory struct{}
@@ -23,10 +21,6 @@ type serviceFactory struct{}
 func NewServiceFactory() ServiceFactory {
 	return &serviceFactory{}
 }
-
-/* func (f *serviceFactory) BuildPresenter() app.Presenter {
-	return logger.NewConsolePresenter()
-} */
 
 func (f *serviceFactory) BuildInitialize() (*app.InitializeService, error) {
 	projectPath, err := f.getProjectPath()

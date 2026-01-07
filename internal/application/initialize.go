@@ -50,11 +50,6 @@ func (s *InitializeService) Run(ctx context.Context, interactive bool) error {
 
 	var project *proAgg.Project
 	if interactive {
-		/* version, err := s.versionService.GetLatest()
-		if err != nil {
-			version = proVos.DefaultContainerCoreVersion
-			fmt.Println("Advertencia!!: no se pudo obtener la versión más reciente del core, se usará la versión por defecto:", version)
-		} */
 		project, err = s.createProjectFromUserInput()
 		if err != nil {
 			return err
@@ -116,8 +111,6 @@ func (s *InitializeService) createProjectFromUserInput() (*proAgg.Project, error
 
 	runtime := proVos.NewRuntime(container, []proVos.Volume{}, []proVos.EnvVar{}, []proVos.Argument{})
 
-	//auth := proVos.NewAuth("", proVos.AuthParams{})
-
 	projectID, err := s.getProjectID(projectData)
 	if err != nil {
 		return nil, err
@@ -144,8 +137,6 @@ func (s *InitializeService) createDefaultProject() (*proAgg.Project, error) {
 	}
 
 	runtime := proVos.NewRuntime(container, []proVos.Volume{}, []proVos.EnvVar{}, []proVos.Argument{})
-
-	//auth := proVos.NewAuth("", proVos.AuthParams{})
 
 	projectID, err := s.getProjectID(projectData)
 	if err != nil {
