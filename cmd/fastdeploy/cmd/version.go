@@ -26,7 +26,7 @@ var versionCmd = &cobra.Command{
 		
 		fmt.Println()
 
-		versionStr := fmt.Sprintf("FastDeploy CLI version: v%s", version)
+		versionStr := fmt.Sprintf("CLI FastDeploy Client: v%s", version)
 		versionColor.Println(versionStr)
 		fmt.Println()
 	},

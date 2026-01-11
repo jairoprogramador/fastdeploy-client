@@ -1,11 +1,10 @@
 package project
 
 import (
-	"context"
 	"os"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
+	"github.com/jairoprogramador/fastdeploy-client/internal/domain/project/ports"
 )
 
 type surveyUserInputService struct{}
@@ -14,7 +13,7 @@ func NewSurveyUserInputService() ports.UserInputService {
 	return &surveyUserInputService{}
 }
 
-func (s *surveyUserInputService) Ask(_ context.Context, question, defaultValue string) (string, error) {
+func (s *surveyUserInputService) Ask(question, defaultValue string) (string, error) {
 	var response string
 	prompt := &survey.Input{
 		Message: question,

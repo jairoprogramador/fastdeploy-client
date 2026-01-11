@@ -1,41 +1,17 @@
 package vos
 
-const (
-	DefaultCoreVersion = "1.0.6"
-	DefaultImageSource = "jairoprogramador/fdrunjava17azure"
-	DefaultImageTag    = "latest"
-	DefaultDockerfile  = "Dockerfile"
-)
-
-const (
-	defaultContainerHomePath       = "/home/fastdeploy"
-	DefaultContainerProjectPath    = defaultContainerHomePath + "/app"
-	DefaultContainerFastdeployPath = defaultContainerHomePath + "/.fastdeploy"
-)
-
-const (
-	ProjectPathKey = "projectPath"
-	StatePathKey   = "statePath"
-)
-
 type Runtime struct {
-	Image   Image
-	Volumes []Volume
-	Env     []EnvVar
+	image Image
+	volumes   []Volume
+	env       []EnvVar
+	args      []Argument
 }
 
-type Image struct {
-	Source      string
-	Tag         string
-	CoreVersion string
+func NewRuntime(image Image, volumes []Volume, env []EnvVar, args []Argument) Runtime {
+	return Runtime{image: image, volumes: volumes, env: env, args: args}
 }
 
-type Volume struct {
-	Host      string
-	Container string
-}
-
-type EnvVar struct {
-	Name  string
-	Value string
-}
+func (r Runtime) Image() Image  { return r.image }
+func (r Runtime) Volumes() []Volume { return r.volumes }
+func (r Runtime) Env() []EnvVar     { return r.env }
+func (r Runtime) Args() []Argument  { return r.args }

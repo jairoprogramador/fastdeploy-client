@@ -4,10 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/factories"
+	"github.com/jairoprogramador/fastdeploy-client/internal/infrastructure/factories"
 	"github.com/spf13/cobra"
-	"strings"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/vos"
 )
 
 var (
@@ -17,9 +15,9 @@ var (
 )
 
 var rootCmd = &cobra.Command {
-	Use:   "fd",
-	Short: "fastdeploy is a CLI tool for managing and deploying projects",
-	Long:  `fastdeploy is a powerful and flexible CLI tool designed to streamline your development and deployment workflows.`,
+	Use:   "fdc",
+	Short: "fastdeploy-client is a CLI tool for managing and deploying projects",
+	Long:  `fastdeploy-client is a powerful and flexible CLI tool designed to streamline your development and deployment workflows.`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			if cmd.HasSubCommands() && cmd.CalledAs() == "fd" {
@@ -47,24 +45,12 @@ var rootCmd = &cobra.Command {
 
 		factory := factories.NewServiceFactory()
 
-		orderService, err := factory.BuildOrderService()
+		executorService, err := factory.BuildExecutor()
 		if err != nil {
 			return err
 		}
 
-		environmentColor := fmt.Sprintf("%s --color=%s", strings.TrimSpace(environment), colorFlag)
-
-		logger, err := orderService.Run(cmd.Context(), command, environmentColor, withTtyFlag)
-		
-		if logger.Status() != vos.Success {
-			presenter := factory.BuildPresenter()
-			presenter.Render(logger)
-		}
-
-		if err != nil {
-			return err
-		}
-		return nil
+		return executorService.Run(cmd.Context(), command, environment)
 	},
 }
 

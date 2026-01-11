@@ -1,4 +1,4 @@
-package app
+package project
 
 import (
 	"encoding/json"
@@ -6,22 +6,22 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/jairoprogramador/fastdeploy/internal/application/ports"
+	"github.com/jairoprogramador/fastdeploy-client/internal/domain/project/ports"
 )
 
 type GitHubRelease struct {
 	TagName string `json:"tag_name"`
 }
 
-type GithubCoreVersion struct {
+type HttpVersion struct {
 }
 
-func NewGithubCoreVersion() ports.CoreVersion {
-	return &GithubCoreVersion{}
+func NewHttpVersion() ports.Version {
+	return &HttpVersion{}
 }
 
-func (g *GithubCoreVersion) GetLatestVersion() (string, error) {
-	apiUrl := "https://api.github.com/repos/jairoprogramador/fastdeploy-core/releases/latest"
+func (g *HttpVersion) GetLatest() (string, error) {
+	apiUrl := "https://api.github.com/repos/jairoprogramador/fastdeploy-client-core/releases/latest"
 
 	resp, err := http.Get(apiUrl)
 	if err != nil {

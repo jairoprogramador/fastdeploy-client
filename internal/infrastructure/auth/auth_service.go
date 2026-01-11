@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jairoprogramador/fastdeploy/internal/application/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/fdplugin"
+	"github.com/jairoprogramador/fastdeploy-client/internal/application/ports"
+	"github.com/jairoprogramador/fastdeploy-client/internal/fdplugin"
 )
 
 type authService struct{}

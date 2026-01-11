@@ -2,14 +2,11 @@ package application
 
 import (
 	"context"
-	"runtime"
+	"errors"
 
-	logAgg "github.com/jairoprogramador/fastdeploy/internal/domain/logger/aggregates"
-	proPor "github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
-	proSer "github.com/jairoprogramador/fastdeploy/internal/domain/project/services"
-	proVos "github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
-
-	appPor "github.com/jairoprogramador/fastdeploy/internal/application/ports"
+	proAgg "github.com/jairoprogramador/fastdeploy-client/internal/domain/project/aggregates"
+	proPor "github.com/jairoprogramador/fastdeploy-client/internal/domain/project/ports"
+	proVos "github.com/jairoprogramador/fastdeploy-client/internal/domain/project/vos"
 )
 
 const MessageProjectAlreadyExists = "project already initialized, fdconfig.yaml exists"
@@ -17,181 +14,139 @@ const MessageProjectAlreadyExists = "project already initialized, fdconfig.yaml 
 type InitializeService struct {
 	projectRepository proPor.ProjectRepository
 	inputService      proPor.UserInputService
+	versionService    proPor.Version
 	projectName       string
-	generatorID       proSer.GeneratorID
-	logger            appPor.Logger
 }
 
 func NewInitializeService(
 	projectName string,
 	repository proPor.ProjectRepository,
 	inputSvc proPor.UserInputService,
-	generatorID proSer.GeneratorID,
-	logger appPor.Logger) *InitializeService {
+	versionSvc proPor.Version,
+) *InitializeService {
 	return &InitializeService{
 		projectRepository: repository,
 		inputService:      inputSvc,
+		versionService:    versionSvc,
 		projectName:       projectName,
-		generatorID:       generatorID,
-		logger:            logger,
 	}
 }
 
-func (s *InitializeService) Run(ctx context.Context, interactive bool) (*logAgg.Logger, error) {
-	logContext := map[string]string{
-		"process": "initialize",
-	}
-	runLog := s.logger.Start(logContext)
-
-	runRecord, err := s.logger.AddRun(runLog, "initialize")
-	if err != nil {
-		return runLog, err
-	}
-
+func (s *InitializeService) Run(ctx context.Context, interactive bool) error {
 	exists, err := s.projectRepository.Exists()
 	if err != nil {
-		runRecord.MarkAsFailure(err)
-		return runLog, err
+		return err
 	}
 	if exists {
-		runRecord.SetResult(MessageProjectAlreadyExists)
-		runRecord.MarkAsWarning()
-		return runLog, nil
+		project, err := s.projectRepository.Load()
+		if err != nil {
+			return err
+		}
+		if project.IsIDDirty() {
+			return s.projectRepository.Save(project)
+		}
+		return errors.New(MessageProjectAlreadyExists)
 	}
 
-	var cfg *proVos.Config
+	var project *proAgg.Project
 	if interactive {
-		cfg, err = s.gatherConfigFromUser(ctx)
+		project, err = s.createProjectFromUserInput()
 		if err != nil {
-			runRecord.MarkAsFailure(err)
-			return runLog, err
+			return err
 		}
 	} else {
-		cfg = s.gatherDefaultConfig()
+		project, err = s.createDefaultProject()
+		if err != nil {
+			return err
+		}
 	}
 
-	cfg.Project.ID = s.generatorID.ProjectID(cfg)
-
-	err = s.projectRepository.Save(cfg)
-	if err != nil {
-		runRecord.MarkAsFailure(err)
-		return runLog, err
-	}
-
-	runRecord.MarkAsSuccess()
-	return runLog, nil
+	return s.projectRepository.Save(project)
 }
 
-func (s *InitializeService) gatherConfigFromUser(ctx context.Context) (*proVos.Config, error) {
-	cfg := s.gatherDefaultConfig()
-
-	var err error
-
-	cfg.Project.Name, err = s.inputService.Ask(ctx, "Project Name", cfg.Project.Name)
+func (s *InitializeService) createProjectFromUserInput() (*proAgg.Project, error) {
+	name, err := s.inputService.Ask("Project Name", s.projectName)
 	if err != nil {
 		return nil, err
 	}
-	cfg.Project.Version, err = s.inputService.Ask(ctx, "Project Version", cfg.Project.Version)
+	team, err := s.inputService.Ask("Project Team", proVos.DefaultProjectTeam)
 	if err != nil {
 		return nil, err
 	}
-	cfg.Project.Team, err = s.inputService.Ask(ctx, "Project Team", cfg.Project.Team)
+	org, err := s.inputService.Ask("Project Organization", proVos.DefaultProjectOrganization)
 	if err != nil {
 		return nil, err
 	}
-	cfg.Project.Organization, err = s.inputService.Ask(ctx, "Project Organization", cfg.Project.Organization)
+	templateURL, err := s.inputService.Ask("Template URL", proVos.DefaultTemplateUrl)
 	if err != nil {
 		return nil, err
 	}
-
-	templateUrl, err := s.inputService.Ask(ctx, "Template URL", cfg.Template.URL())
+	templateRef, err := s.inputService.Ask("Template Ref", proVos.DefaultTemplateRef)
 	if err != nil {
 		return nil, err
 	}
-	cfg.Template = proVos.NewTemplate(templateUrl, "")
-
-	cfg.Runtime.Image.Source, err = s.inputService.Ask(ctx, "Runtime Image Source", cfg.Runtime.Image.Source)
+	containerImage, err := s.inputService.Ask("Container Image", proVos.DefaultContainerImage)
 	if err != nil {
 		return nil, err
 	}
-
-	cfg.Runtime.Image.Tag, err = s.inputService.Ask(ctx, "Runtime Image Tag", cfg.Runtime.Image.Tag)
+	containerTag, err := s.inputService.Ask("Container Image Tag", proVos.DefaultContainerTag)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg.Runtime.Volumes = s.getVolumes()
-
-	cfg.Runtime.Env = s.getEnvVars()
-
-	cfg.State.Backend, err = s.inputService.Ask(ctx, "State Backend", cfg.State.Backend)
+	projectData, err := proVos.NewProjectData(name, org, team, "")
 	if err != nil {
 		return nil, err
 	}
 
-	return cfg, nil
+	template, err := proVos.NewTemplate(templateURL, templateRef)
+	if err != nil {
+		return nil, err
+	}
+
+	container, err := proVos.NewImage(containerImage, containerTag)
+	if err != nil {
+		return nil, err
+	}
+
+	runtime := proVos.NewRuntime(container, []proVos.Volume{}, []proVos.EnvVar{}, []proVos.Argument{})
+
+	projectID, err := s.getProjectID(projectData)
+	if err != nil {
+		return nil, err
+	}
+
+	return proAgg.NewProject(projectID, projectData, template, runtime)
 }
 
-func (s *InitializeService) gatherDefaultConfig() *proVos.Config {
-	return &proVos.Config{
-		Project: proVos.Project{
-			Name:         s.projectName,
-			Version:      proVos.DefaultProjectVersion,
-			Team:         proVos.DefaultProjectTeam,
-			Description:  proVos.DefaultProjectDescription,
-			Organization: proVos.DefaultProjectOrganization,
-		},
-		Template: proVos.NewTemplate(proVos.DefaultUrl, proVos.DefaultRef),
-		Runtime: proVos.Runtime{
-			Image: proVos.Image {
-				Source: proVos.DefaultImageSource,
-				Tag:    proVos.DefaultImageTag,
-			},
-		},
-		State: proVos.State{
-			Backend: proVos.DefaultStateBackend,
-			URL:     proVos.DefaultStateURL,
-		},
+func (s *InitializeService) createDefaultProject() (*proAgg.Project, error) {
+	projectData, err := proVos.NewProjectData(
+		s.projectName, proVos.DefaultProjectOrganization, proVos.DefaultProjectTeam, "")
+	if err != nil {
+		return nil, err
 	}
+
+	template, err := proVos.NewTemplate(proVos.DefaultTemplateUrl, proVos.DefaultTemplateRef)
+	if err != nil {
+		return nil, err
+	}
+
+	container, err := proVos.NewImage(proVos.DefaultContainerImage, proVos.DefaultContainerTag)
+	if err != nil {
+		return nil, err
+	}
+
+	runtime := proVos.NewRuntime(container, []proVos.Volume{}, []proVos.EnvVar{}, []proVos.Argument{})
+
+	projectID, err := s.getProjectID(projectData)
+	if err != nil {
+		return nil, err
+	}
+
+	return proAgg.NewProject(projectID, projectData, template, runtime)
 }
 
-func (s *InitializeService) getVolumes() []proVos.Volume {
-	var homeM2Path string
-	if runtime.GOOS == "windows" {
-		homeM2Path = "%USERPROFILE%\\.m2\\"
-	} else {
-		homeM2Path = "$HOME/.m2/"
-	}
-
-	volumes := make([]proVos.Volume, 2)
-	volumes[0] = proVos.Volume{
-		Host:      homeM2Path,
-		Container: "/home/fastdeploy/.m2",
-	}
-	volumes[1] = proVos.Volume{
-		Host:      "/var/run/docker.sock",
-		Container: "/var/run/docker.sock",
-	}
-	return volumes
-}
-
-func (s *InitializeService) getEnvVars() []proVos.EnvVar {
-	env := make([]proVos.EnvVar, 4)
-	env[0] = proVos.EnvVar{
-		Name:  "ARM_CLIENT_ID",
-		Value: "{env.AZURE_CLIENT_ID}",
-	}
-	env[1] = proVos.EnvVar{
-		Name:  "ARM_CLIENT_SECRET",
-		Value: "{env.AZURE_CLIENT_SECRET}",
-	}
-	env[2] = proVos.EnvVar{
-		Name:  "ARM_TENANT_ID",
-		Value: "{env.AZURE_TENANT_ID}",
-	}
-	env[3] = proVos.EnvVar{
-		Name:  "ARM_SUBSCRIPTION_ID",
-		Value: "{env.AZURE_SUBSCRIPTION_ID}",
-	}
-	return env
+func (s *InitializeService) getProjectID(data proVos.ProjectData) (proVos.ProjectID, error) {
+	generatedID := proVos.GenerateProjectID(data.Name(), data.Organization(), data.Team())
+	return proVos.NewProjectID(generatedID.String())
 }

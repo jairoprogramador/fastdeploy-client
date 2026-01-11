@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/vos"
+	"github.com/jairoprogramador/fastdeploy-client/internal/domain/logger/vos"
 )
 
 type TaskRecord struct {

@@ -1,44 +1,35 @@
 project:
-    id: 63a99d77511c8f1418d14ea67e3b53cda45617f70dd33430c8b68d909dfa3a32
+    id: 93a2489d193a6a97f8600d36c610be3893dff10694e57bc30ce353fa80c18d50
     name: test
-    version: 1.0.0
     team: shikigami
     description: mi despliegue con fastdeploy
     organization: fastdeploy
-
 template:
     url: https://github.com/jairoprogramador/mydeploy.git
     ref: main
-
-# auth:
-#   plugin: "azure"
-#   params:
-#     client_id: "{env.AZURE_CLIENT_ID}"
-#     grant_type: "AUTH_GRANT_TYPE_CLIENT_CREDENTIALS"
-#     client_secret: "{env.AZURE_CLIENT_SECRET}"
-#     extra:
-#       - tenant_id: "{env.AZURE_TENANT_ID}"
-
 runtime:
-    core_version: 1.0.3
-    image:
-        #source: fastdeploy/runner-java17-springboot
-        tag: latest
-    volumes:
-      - host: /home/jairo/.m2/
-        container: /home/fastdeploy/.m2
-      - host: /var/run/docker.sock
-        container: /var/run/docker.sock
-    env:
-      - name: "ARM_CLIENT_ID"
-        value: "{env.AZURE_CLIENT_ID}"
-      - name: "ARM_CLIENT_SECRET"
-        value: "{env.AZURE_CLIENT_SECRET}"
-      - name: "ARM_TENANT_ID"
-        value: "{env.AZURE_TENANT_ID}"
-      - name: "ARM_SUBSCRIPTION_ID"
-        value: "{env.AZURE_SUBSCRIPTION_ID}"
-
-state:
-    backend: local
-    url: ""
+    image: Dockerfile
+    tag: latest
+    build:
+      args:
+        - name: "FASTDEPLOY_VERSION"
+          value: "1.0.10"
+        - name: "MAVEN_VERSION"
+          value: "3.9.12"
+    run:
+      volumes:
+        - host: /home/jairo/.m2/
+          container: /home/ubuntu/.m2
+        - host: /home/jairo/Developer/java/test
+          container: /home/fastdeploy/app
+        - host: /home/jairo/Developer/go/dirFastDeploy
+          container: /home/ubuntu/.fastdeploy
+      envs:
+        - name: "ARM_CLIENT_ID"
+          value: "$ARM_CLIENT_ID"
+        - name: "ARM_CLIENT_SECRET"
+          value: "$ARM_CLIENT_SECRET"
+        - name: "ARM_TENANT_ID"
+          value: "$ARM_TENANT_ID"
+        - name: "ARM_SUBSCRIPTION_ID"
+          value: "$ARM_SUBSCRIPTION_ID"

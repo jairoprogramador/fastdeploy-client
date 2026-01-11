@@ -1,9 +1,9 @@
 package application
 
 import (
-	appPor "github.com/jairoprogramador/fastdeploy/internal/application/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/aggregates"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/entities"
+	appPor "github.com/jairoprogramador/fastdeploy-client/internal/application/ports"
+	"github.com/jairoprogramador/fastdeploy-client/internal/domain/logger/aggregates"
+	"github.com/jairoprogramador/fastdeploy-client/internal/domain/logger/entities"
 )
 
 type AppLogger struct {}

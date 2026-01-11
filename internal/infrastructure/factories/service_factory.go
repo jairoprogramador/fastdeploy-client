@@ -4,24 +4,16 @@ import (
 	"os"
 	"path/filepath"
 
-	applic "github.com/jairoprogramador/fastdeploy/internal/application"
-	appPor "github.com/jairoprogramador/fastdeploy/internal/application/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/auth"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/docker"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/executor"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/path"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/project"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/variable"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/logger"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/app"
-	"github.com/mattn/go-isatty"
+	app "github.com/jairoprogramador/fastdeploy-client/internal/application"
+	dockerDomain "github.com/jairoprogramador/fastdeploy-client/internal/domain/docker/services"
+	"github.com/jairoprogramador/fastdeploy-client/internal/domain/project/ports"
+	"github.com/jairoprogramador/fastdeploy-client/internal/infrastructure/docker"
+	"github.com/jairoprogramador/fastdeploy-client/internal/infrastructure/project"
 )
 
 type ServiceFactory interface {
-	BuildOrderService() (*applic.ExecutorService, error)
-	BuildInitService() (*applic.InitializeService, error)
-	BuildPresenter() appPor.Presenter
+	BuildExecutor() (*app.ExecutorService, error)
+	BuildInitialize() (*app.InitializeService, error)
 }
 
 type serviceFactory struct{}
@@ -30,66 +22,46 @@ func NewServiceFactory() ServiceFactory {
 	return &serviceFactory{}
 }
 
-func (f *serviceFactory) BuildPresenter() appPor.Presenter {
-	return logger.NewConsolePresenter()
-}
-
-func (f *serviceFactory) BuildInitService() (*applic.InitializeService, error) {
-	projectRepository, workDir, err := f.getProjectRepository()
+func (f *serviceFactory) BuildInitialize() (*app.InitializeService, error) {
+	projectPath, err := f.getProjectPath()
 	if err != nil {
 		return nil, err
 	}
-
-	generatorID := project.NewShaGeneratorID()
-
-	appLogger := applic.NewAppLogger()
+	projectRepository, err := f.getProjectRepository(projectPath)
+	if err != nil {
+		return nil, err
+	}
 
 	inputService := project.NewSurveyUserInputService()
-	return applic.NewInitializeService(filepath.Base(workDir), projectRepository, inputService, generatorID, appLogger), nil
+	versionService := project.NewHttpVersion()
+
+	return app.NewInitializeService(
+		filepath.Base(projectPath), projectRepository, inputService, versionService), nil
 }
 
-func (f *serviceFactory) BuildOrderService() (*applic.ExecutorService, error) {
-	projectRepository, workDir, err := f.getProjectRepository()
+func (f *serviceFactory) BuildExecutor() (*app.ExecutorService, error) {
+	projectPath, err := f.getProjectPath()
+	if err != nil {
+		return nil, err
+	}
+	projectRepository, err := f.getProjectRepository(projectPath)
 	if err != nil {
 		return nil, err
 	}
 
-	isTerminal := isatty.IsTerminal(os.Stdout.Fd())
+	cmdExecutor := docker.NewShellExecutor()
+	imageService := dockerDomain.NewImageBuilder()
+	containerService := dockerDomain.NewContainerBuilder()
 
-	pathService := path.NewPathService()
-
-	appLogger := applic.NewAppLogger()
-
-	cmdExecutor := executor.NewShellExecutor()
-	dockerService := docker.NewDockerService(cmdExecutor)
-
-	authService := auth.NewAuthService()
-	variableResolver := variable.NewVariableResolver()
-
-	fileConfig, err := projectRepository.Load()
-	if err != nil {
-		return nil, err
-	}
-	coreVersion := app.NewGithubCoreVersion()
-
-	return applic.NewExecutorService(
-		fileConfig,
-		isTerminal,
-		workDir,
-		pathService.GetFastdeployHome(),
-		projectRepository,
-		dockerService,
-		authService,
-		variableResolver,
-		coreVersion,
-		appLogger), nil
+	return app.NewExecutorService(
+		projectRepository, cmdExecutor, imageService, containerService), nil
 }
 
-func (f *serviceFactory) getProjectRepository() (ports.ProjectRepository, string, error) {
-	workDir, err := os.Getwd()
-	if err != nil {
-		return nil, "", err
-	}
-	projectRepository := project.NewYAMLProjectRepository(workDir)
-	return projectRepository, workDir, nil
+func (f *serviceFactory) getProjectRepository(projectPath string) (ports.ProjectRepository, error) {
+	projectRepository := project.NewYAMLProjectRepository(projectPath)
+	return projectRepository, nil
+}
+
+func (f *serviceFactory) getProjectPath() (string, error) {
+	return os.Getwd()
 }
