@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	docPor "github.com/jairoprogramador/fastdeploy/internal/domain/docker/ports"
-	docVos "github.com/jairoprogramador/fastdeploy/internal/domain/docker/vos"
-	proPor "github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
-	proVos "github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
+	docPor "github.com/jairoprogramador/fastdeploy-client/internal/domain/docker/ports"
+	docVos "github.com/jairoprogramador/fastdeploy-client/internal/domain/docker/vos"
+	proPor "github.com/jairoprogramador/fastdeploy-client/internal/domain/project/ports"
+	proVos "github.com/jairoprogramador/fastdeploy-client/internal/domain/project/vos"
 )
 
 const MessageProjectNotInitialized = "project not initialized. Please run 'fd init' first"
@@ -80,9 +80,9 @@ func (s *ExecutorService) Run(ctx context.Context, command, environment string) 
 		fmt.Println("Image to use no Dockerfile: ", imageToUse.FullName())
 	}
 
-	commandFastdeploy := fmt.Sprintf("%s %s", command, environment)
+	commandfastdeploy := fmt.Sprintf("%s %s", command, environment)
 
-	containerOptions, err := s.containerService.CreateOptions(project, commandFastdeploy, imageToUse)
+	containerOptions, err := s.containerService.CreateOptions(project, commandfastdeploy, imageToUse)
 	if err != nil {
 		return err
 	}

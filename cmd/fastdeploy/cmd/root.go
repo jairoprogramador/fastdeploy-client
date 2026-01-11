@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/factories"
+	"github.com/jairoprogramador/fastdeploy-client/internal/infrastructure/factories"
 	"github.com/spf13/cobra"
 )
 
@@ -16,8 +16,8 @@ var (
 
 var rootCmd = &cobra.Command {
 	Use:   "fdc",
-	Short: "fastdeploy is a CLI tool for managing and deploying projects",
-	Long:  `fastdeploy is a powerful and flexible CLI tool designed to streamline your development and deployment workflows.`,
+	Short: "fastdeploy-client is a CLI tool for managing and deploying projects",
+	Long:  `fastdeploy-client is a powerful and flexible CLI tool designed to streamline your development and deployment workflows.`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			if cmd.HasSubCommands() && cmd.CalledAs() == "fd" {

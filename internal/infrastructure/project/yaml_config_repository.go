@@ -5,10 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/aggregates"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/project/dto"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/project/mapper"
+	"github.com/jairoprogramador/fastdeploy-client/internal/domain/project/aggregates"
+	"github.com/jairoprogramador/fastdeploy-client/internal/domain/project/ports"
+	"github.com/jairoprogramador/fastdeploy-client/internal/infrastructure/project/dto"
+	"github.com/jairoprogramador/fastdeploy-client/internal/infrastructure/project/mapper"
 	"gopkg.in/yaml.v3"
 )
 

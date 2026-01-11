@@ -3,7 +3,7 @@ package aggregates
 import (
 	"errors"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
+	"github.com/jairoprogramador/fastdeploy-client/internal/domain/project/vos"
 )
 
 type Project struct {

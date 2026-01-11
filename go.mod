@@ -1,4 +1,4 @@
-module github.com/jairoprogramador/fastdeploy
+module github.com/jairoprogramador/fastdeploy-client
 
 go 1.25.1
 

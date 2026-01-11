@@ -8,11 +8,11 @@ import (
 
 	"github.com/fatih/color"
 
-	"github.com/jairoprogramador/fastdeploy/internal/application/ports"
+	"github.com/jairoprogramador/fastdeploy-client/internal/application/ports"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/aggregates"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/entities"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/vos"
+	"github.com/jairoprogramador/fastdeploy-client/internal/domain/logger/aggregates"
+	"github.com/jairoprogramador/fastdeploy-client/internal/domain/logger/entities"
+	"github.com/jairoprogramador/fastdeploy-client/internal/domain/logger/vos"
 )
 
 type failedInfo struct {

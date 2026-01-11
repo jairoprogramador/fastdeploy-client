@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/factories"
+	"github.com/jairoprogramador/fastdeploy-client/internal/infrastructure/factories"
 	"github.com/spf13/cobra"
 )
 

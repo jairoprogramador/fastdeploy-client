@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 
-	"github.com/jairoprogramador/fastdeploy/internal/fdplugin"
+	"github.com/jairoprogramador/fastdeploy-client/internal/fdplugin"
 )
 
 type AuthService interface {

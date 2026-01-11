@@ -1,6 +1,6 @@
 package main
 
-import "github.com/jairoprogramador/fastdeploy/cmd/fastdeploy/cmd"
+import "github.com/jairoprogramador/fastdeploy-client/cmd/fastdeploy/cmd"
 
 func main() {
 	cmd.Execute()
