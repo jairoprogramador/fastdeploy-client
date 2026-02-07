@@ -8,7 +8,8 @@ release:
 
 builds:
   - id: vex
-    main: github.com/jairoprogramador/vex-client/cmd/vex
+    main: ./cmd/vex
+    dir: .
     binary: vex
     env:
       - CGO_ENABLED=0
