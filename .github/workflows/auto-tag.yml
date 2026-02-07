@@ -29,18 +29,7 @@ jobs:
           github_token: ${{ secrets.WORKFLOW_TRIGGER_TOKEN }}
           release_branches: main
           default_bump: patch
-          custom_release_rules: |
-            feat:minor
-            fix:patch
-            perf:patch
-            chore:patch
-            docs:patch
-            refactor:patch
-            style:patch
-            test:patch
-            build:patch
-            ci:patch
-            BREAKING CHANGE:major
+          custom_release_rules: feat:minor,fix:patch,perf:patch,chore:patch,docs:patch,refactor:patch,style:patch,test:patch,build:patch,ci:patch,BREAKING CHANGE:major
           tag_prefix: v
           dry_run: false
           create_annotated_tag: false
