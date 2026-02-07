@@ -9,7 +9,6 @@ release:
 builds:
   - id: vex
     main: ./cmd/vex
-    dir: .
     binary: vex
     env:
       - CGO_ENABLED=0
