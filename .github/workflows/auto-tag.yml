@@ -42,6 +42,14 @@ jobs:
             ci:patch
             BREAKING CHANGE:major
           tag_prefix: v
+          dry_run: false
+          create_annotated_tag: false
+
+      - name: Debug outputs
+        run: |
+          echo "New tag: ${{ steps.versioner.outputs.new_tag }}"
+          echo "Previous tag: ${{ steps.versioner.outputs.previous_tag }}"
+          echo "Bump type: ${{ steps.versioner.outputs.bump }}"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
